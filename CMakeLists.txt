@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_BUILD_TYPE Debug)
 cmake_policy(SET CMP0167 NEW)
+set(ROOT_PROJECT_PATH ${CMAKE_SOURCE_DIR} CACHE PATH "Path to the root project")
 
 #boost lib settings
 set(Boost_USE_STATIC_LIBS ON)

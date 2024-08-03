@@ -63,4 +63,9 @@ void report()
     BOOST_LOG_TRIVIAL(info) << "build system: " << build_info::systemName;
     BOOST_LOG_TRIVIAL(info) << "binary build time : " << build_info::buildTime;
     BOOST_LOG_TRIVIAL(info) << "start time: " << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+
+    uint8_t tarData;
+    size_t tarDataSize;
+    build_info::projectSourceTarData(&tarData, &tarDataSize);
+    BOOST_LOG_TRIVIAL(info) << "souce project tar package size" << tarDataSize;
 }

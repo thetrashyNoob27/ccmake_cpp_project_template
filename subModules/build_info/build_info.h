@@ -2,6 +2,8 @@
 #define _BUILD_INFO_H_
 
 #include <string>
+#include <cstdint>
+
 namespace build_info
 {
     extern const std::string buildTime;
@@ -14,6 +16,7 @@ namespace build_info
     extern const std::string gitCommit;
     extern const std::string gitDirtyStr;
     extern const bool gitDirty;
+    void projectSourceTarData(uint8_t *tarData, uintptr_t *size);
 
 };
 
