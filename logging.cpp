@@ -2,6 +2,13 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <boost/filesystem.hpp>
+
+static std::string _basename(const std::string &file_path)
+{
+    boost::filesystem::path p(file_path);
+    return p.filename().string();
+}
 
 void loggingSetup()
 {
@@ -20,7 +27,7 @@ void loggingSetup()
     static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%LineID%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
 
     boost::log::core::get()->add_global_attribute("ThreadID", boost::log::attributes::current_thread_id());
-    boost::log::core::get()->add_global_attribute("File", boost::log::attributes::mutable_constant<std::string>(__FILE__));
+    boost::log::core::get()->add_global_attribute("File", boost::log::attributes::mutable_constant<std::string>(_basename(__FILE__)));
     boost::log::core::get()->add_global_attribute("LineID", boost::log::attributes::mutable_constant<int>(__LINE__));
     boost::log::core::get()->add_global_attribute("Function", boost::log::attributes::mutable_constant<std::string>(__FUNCTION__));
 
