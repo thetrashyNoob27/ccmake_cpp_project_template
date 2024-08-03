@@ -46,3 +46,33 @@ boost::program_options::variables_map arg_praser(int argc, char **argv)
     }
     return vm;
 }
+void argDebugPrint(const boost::program_options::variables_map &vm)
+{
+#define SINK BOOST_LOG_TRIVIAL(info)
+    if (vm.count("string"))
+    {
+        SINK << "arg name->" << "string: " << vm["string"].as<std::string>();
+    }
+
+    if (vm.count("value"))
+    {
+        SINK << "arg name->" << "value: " << vm["value"].as<float>();
+    }
+
+    if (vm.count("enable"))
+    {
+        SINK << "arg name->" << "enable: " << vm["enable"].as<bool>();
+    }
+
+    if (vm.count("array"))
+    {
+        std::ostringstream oss;
+        oss << "arg name->" << "Output files:";
+        for (const auto &output : vm["array"].as<std::vector<std::string>>())
+        {
+            oss << " " << output;
+        }
+        SINK << oss.str();
+    }
+#undef SINK
+}
