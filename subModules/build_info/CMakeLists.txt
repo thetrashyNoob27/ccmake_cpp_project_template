@@ -48,9 +48,9 @@ execute_process(
 
 # Determine if the repository is dirty
 if (GIT_STATUS STREQUAL "")
-    add_definitions(-DGIT_DIRTY="DIRTY")
-else()
     add_definitions(-DGIT_DIRTY="CLEAN")
+else()
+    add_definitions(-DGIT_DIRTY="DIRTY")
 endif()
 
 
