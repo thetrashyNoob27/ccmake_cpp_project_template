@@ -11,6 +11,6 @@
 #include <boost/log/attributes.hpp>
 #include <boost/log/utility/setup/from_settings.hpp>
 
-void loggingSetup();
+void loggingSetup(const std::string &loggingBase);
 void report();
 #endif

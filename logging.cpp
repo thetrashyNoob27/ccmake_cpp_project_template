@@ -29,7 +29,7 @@ static std::string _basename(const std::string &file_path)
     return p.filename().string();
 }
 
-void loggingSetup()
+void loggingSetup(const std::string &loggingBase)
 {
     namespace logging = boost::log;
     namespace src = boost::log::sources;
@@ -39,6 +39,7 @@ void loggingSetup()
     std::string logTextFileName;
     {
         std::ostringstream oss;
+        oss << loggingBase << "/";
         oss << PROJECT_NAME << ".log";
         logTextFileName = oss.str();
     }

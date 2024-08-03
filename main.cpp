@@ -9,7 +9,10 @@ int main(int argc, char **argv, char **env)
 
     auto vm = arg_praser(argc, argv);
     argDebugPrint(vm);
-    loggingSetup();
+    {
+        std::string lp = vm["logging-path"].as<std::string>();
+        loggingSetup(lp);
+    }
     report();
 #ifdef ENABLE_PROJECT_ARCHIEVE
     if (vm.count("dump-project-source"))

@@ -36,9 +36,20 @@ void log_env_vars(char **env)
     return;
 }
 
+#include <filesystem>
 float value;
 boost::program_options::variables_map arg_praser(int argc, char **argv)
 {
+    std::filesystem::path tempPath;
+    try
+    {
+        tempPath = std::filesystem::temp_directory_path();
+    }
+    catch (const std::filesystem::filesystem_error &e)
+    {
+        BOOST_LOG_TRIVIAL(error) << "accquire temp dir fail:" << e.what();
+    }
+
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     desc.add_options()("help,h", "produce help message");
@@ -46,6 +57,8 @@ boost::program_options::variables_map arg_praser(int argc, char **argv)
     desc.add_options()("value,v", po::value<float>(&value)->default_value(3.14), "float option");
     desc.add_options()("enable,e", po::bool_switch()->default_value(false), "enable option");
     desc.add_options()("array,a", po::value<std::vector<std::string>>()->multitoken(), "array of options");
+
+    desc.add_options()("logging-path", po::value<std::string>()->default_value(tempPath.string()), "log output location");
 #ifdef ENABLE_PROJECT_ARCHIEVE
     desc.add_options()("dump-project-source", po::value<std::string>(), "project tar package save location (save to path)");
 #endif
@@ -89,5 +102,15 @@ void argDebugPrint(const boost::program_options::variables_map &vm)
         }
         SINK << oss.str();
     }
+    if (vm.count("logging-path"))
+    {
+        SINK << "arg name->" << "enable: " << vm["logging-path"].as<std::string>();
+    }
+#ifdef ENABLE_PROJECT_ARCHIEVE
+    if (vm.count("dump-project-source"))
+    {
+        SINK << "arg name->" << "enable: " << vm["dump-project-source"].as<std::string>();
+    }
+#endif
 #undef SINK
 }
