@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <sstream>
 #include <boost/filesystem.hpp>
+#include "build_info.h"
 
 static std::string _basename(const std::string &file_path)
 {
@@ -54,6 +55,7 @@ void loggingSetup()
 
     // Output the formatted time
     BOOST_LOG_TRIVIAL(info) << "project: " << PROJECT_NAME << " " << "version: " << PROJECT_VERSION;
-    BOOST_LOG_TRIVIAL(info) << "binary build time : " << PORJECT_BUILD_DATE << " " << PORJECT_BUILD_TIME;
+    BOOST_LOG_TRIVIAL(info) << "build: " << build_info::buildTimeStr << " " << "ID: " << build_info::buildTimeStr;
+    BOOST_LOG_TRIVIAL(info) << "binary build time : " << build_info::buildTimeStr;
     BOOST_LOG_TRIVIAL(info) << "start time: " << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
 }

@@ -1,14 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 set(PROJECT_NAME "cmake_cpp_project_template")
 set(PROJECT_BINARY "cmake_cpp_project_template")
-project("${PROJECT_NAME}" VERSION 1.0)
+project("${PROJECT_NAME}" VERSION 1.2.3)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_BUILD_TYPE Debug)
 cmake_policy(SET CMP0167 NEW)
-
 
 #boost lib settings
 set(Boost_USE_STATIC_LIBS ON)
@@ -36,9 +35,12 @@ function(include_sub_project subproj_name)
 message(STATUS "add sub-project: ${subproj_name}")
 set(subproj_dir "${CMAKE_CURRENT_SOURCE_DIR}/subModules/${subproj_name}")
 message(STATUS "sub-projectpath: ${subproj_dir}")
-
+include_directories("${subproj_dir}")
 add_subdirectory("${subproj_dir}")
 target_link_libraries("${PROJECT_BINARY}" "${subproj_name}")
 endfunction()
 
 include_sub_project("sqlite3")
+include_sub_project("build_info")
+
+
