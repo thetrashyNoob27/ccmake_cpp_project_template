@@ -1,0 +1,51 @@
+#include <iostream>
+#include "argProcessing.h"
+
+void print_args(int argc, char **argv)
+{
+    std::printf("process args:\n");
+    for (int i = 0; i < argc; i++)
+    {
+        std::printf("[%2d][%s]\n", i, argv[i]);
+    }
+    return;
+}
+
+void print_env_vars(char **env)
+{
+    std::printf("process env variables:\n");
+    char **envstr = env;
+    int env_counter = 0;
+    while (*envstr != NULL)
+    {
+        std::printf("env[%02d] [%s]\n", env_counter++, *envstr);
+        envstr++;
+    }
+    return;
+}
+
+#ifdef ENABLE_ARG_PARSE
+float value;
+boost::program_options::variables_map arg_praser(int argc, char **argv)
+{
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("string,s", po::value<std::string>(), "string option");
+    desc.add_options()("value,v", po::value<float>(&value)->default_value(3.14), "float option");
+    desc.add_options()("enable,e", po::bool_switch()->default_value(false), "enable option");
+    desc.add_options()("array,a", po::value<std::vector<std::string>>()->multitoken(), "array of options");
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help"))
+    {
+        std::cout << desc << std::endl;
+        std::exit(EXIT_SUCCESS);
+    }
+    return vm;
+}
+#else
+#endif

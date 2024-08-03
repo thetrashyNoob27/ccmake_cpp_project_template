@@ -1,0 +1,27 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define PROJECT_NAME "@PROJECT_NAME@"
+#define PROJECT_BINARY "@PROJECT_BINARY@"
+#define PROJECT_VERSION "@PROJECT_VERSION@"
+#define PROJECT_VERSION_MAJOR "@PROJECT_VERSION_MAJOR@"
+#define PROJECT_VERSION_MINOR "@PROJECT_VERSION_MINOR@"
+#define PROJECT_VERSION_PATCH "@PROJECT_VERSION_PATCH@"
+
+#endif
+
+#ifdef ENABLE_ARG_PARSE
+/* custom content start*/
+/* custom content end*/
+#else
+/* custom content start*/
+/* custom content end*/
+#endif
+
+#ifdef ENABLE_LOGGING
+/* custom content start*/
+/* custom content end*/
+#else
+/* custom content start*/
+/* custom content end*/
+#endif
