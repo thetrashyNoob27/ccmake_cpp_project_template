@@ -7,7 +7,6 @@ int main(int argc, char **argv, char **env)
     std::printf("project: %s version:%s\n", PROJECT_NAME, PROJECT_VERSION);
     print_args(argc, argv);
 
-#ifdef ENABLE_ARG_PARSE
     auto vm = arg_praser(argc, argv);
     if (vm.count("string"))
     {
@@ -33,21 +32,6 @@ int main(int argc, char **argv, char **env)
         }
         std::cout << std::endl;
     }
-/* custom content start*/
-/* custom content end*/
-#else
-    std::cout << "boost_program_options no found." << std::endl;
-/* custom content start*/
-/* custom content end*/
-#endif
 
-#ifdef ENABLE_LOGGING
     loggingSetup();
-/* custom content start*/
-/* custom content end*/
-#else
-    std::cout << "logging is disabled." << std::endl;
-/* custom content start*/
-/* custom content end*/
-#endif
 }

@@ -9,51 +9,22 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_BUILD_TYPE Debug)
 
 
-
-# arg prase feature
-find_library(ARG_PRASE_LIB boost_program_options)
-if (ARG_PRASE_LIB)
-add_definitions(-DENABLE_ARG_PARSE)
-message(STATUS "boost::program_options found: ${ARG_PRASE_LIB}")
-else()
-message(WARNING "not found, disable arg processing.")
-endif()
-
-
-# logingfeature 
-find_library(BOOST_LOG_LIB boost_program_options)
-find_library(BOOST_LOG_SETUP_LIB boost_log_setup)
-find_library(BOOST_THREAD_LIB boost_thread)
-find_library(BOOST_FILESYSTEM_LIB boost_filesystem)
-if(BOOST_LOG_LIB AND BOOST_LOG_SETUP_LIB AND BOOST_THREAD_LIB AND BOOST_FILESYSTEM_LIB)
-set(ENABLE_LOGGING TRUE)
-add_definitions(-DENABLE_LOGGING)
-message(STATUS "boost lib's logging requirement found: ${BOOST_LOG_LIB} ${BOOST_LOG_SETUP_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB}")
-else()
-message(WARNING "not found, disable logging processing.")
-endif()
-
-
+#boost lib settings
+set(Boost_USE_STATIC_LIBS ON)
+#arg processing feature & logging
+find_package(Boost 1.80 REQUIRED COMPONENTS program_options log_setup log thread filesystem)
+find_package(Threads)
 
 # write marcon to header
-configure_file(config.h.in config.h)
+configure_file("config.h.in" "config.h")
 
 # main executable config
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 include_directories("${CMAKE_BINARY_DIR}")# for config.h.in
 add_executable("${PROJECT_BINARY}" main.cpp argProcessing.cpp logging.cpp)
 target_compile_options("${PROJECT_BINARY}" PRIVATE 
-    $<$<CONFIG:Debug>:-g>
-    $<$<CONFIG:Release>:-O2>
+    $<$<CONFIG:Debug>:-g -O2>
+    $<$<CONFIG:Release>:-g-O2>
 )
 
-if (ARG_PRASE_LIB)
-target_link_libraries("${PROJECT_BINARY}" PRIVATE ${ARG_PRASE_LIB})
-else()
-endif()
-
-if (ENABLE_LOGGING)
-target_link_libraries("${PROJECT_BINARY}" PRIVATE ${BOOST_LOG_LIB} ${BOOST_LOG_SETUP_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB})
-else()
-endif()
-
+target_link_libraries("${PROJECT_BINARY}" ${Boost_LIBRARIES} Threads::Threads)

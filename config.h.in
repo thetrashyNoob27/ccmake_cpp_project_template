@@ -9,19 +9,3 @@
 #define PROJECT_VERSION_PATCH "@PROJECT_VERSION_PATCH@"
 
 #endif
-
-#ifdef ENABLE_ARG_PARSE
-/* custom content start*/
-/* custom content end*/
-#else
-/* custom content start*/
-/* custom content end*/
-#endif
-
-#ifdef ENABLE_LOGGING
-/* custom content start*/
-/* custom content end*/
-#else
-/* custom content start*/
-/* custom content end*/
-#endif

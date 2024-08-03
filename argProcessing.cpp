@@ -24,7 +24,6 @@ void print_env_vars(char **env)
     return;
 }
 
-#ifdef ENABLE_ARG_PARSE
 float value;
 boost::program_options::variables_map arg_praser(int argc, char **argv)
 {
@@ -47,5 +46,3 @@ boost::program_options::variables_map arg_praser(int argc, char **argv)
     }
     return vm;
 }
-#else
-#endif
