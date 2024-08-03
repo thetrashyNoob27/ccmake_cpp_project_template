@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 OUTPUT_H_NAME=project_archieve_data
 
+# ./project_package.sh /home/peter/Documents/programming/c++/cmake_cpp_project_template
+
 test_command_exist()
 {
     the_command=$1;
@@ -29,7 +31,6 @@ unsigned char test_h[] = {
 $1
 };
 unsigned char test_h_end;
-
 EOF
 }
 # OUTPUT_H_NAME=test
@@ -60,6 +61,6 @@ if [[ $? -eq 1 ]]; then
     exit;
 fi
 echo "this is bash script.";
-tar_data=$(tar -cvzf - --exclude=".build" --exclude=".vscode" --exclude="${OUTPUT_H_NAME}" -C "$(dirname ${ROOT_PROJECT_PATH})" "$(basename ${ROOT_PROJECT_PATH})"|xxd -i);
+tar_data=$(tar -cvzf - --exclude=".build" --exclude=".vscode" --exclude="${OUTPUT_H_NAME}.*"  -C "$(dirname ${ROOT_PROJECT_PATH})" "$(basename ${ROOT_PROJECT_PATH})"|xxd -i);
 create_head_file "${tar_data}";
 echo "tar header create to ${OUTPUT_H_NAME}";
