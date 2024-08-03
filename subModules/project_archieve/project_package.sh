@@ -44,7 +44,7 @@ then
     create_head_file;
     exit;
 else
-    pass
+    true
 fi
 
 # ROOT_PROJECT_PATH="/home/peter/Documents/programming/c++/cmake_cpp_project_template"
