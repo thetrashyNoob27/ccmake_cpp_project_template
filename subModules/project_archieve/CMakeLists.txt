@@ -24,3 +24,12 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 add_library("${PROJECT_NAME}" STATIC project_archieve.cpp project_archieve_data.cpp)
 
 set_target_properties("${PROJECT_NAME}"  PROPERTIES VERSION 1.0.0 SOVERSION 1)
+
+
+
+set_property(
+        TARGET "${PROJECT_NAME}"
+        APPEND
+        PROPERTY ADDITIONAL_CLEAN_FILES project_archieve_data.cpp
+        PROPERTY ADDITIONAL_CLEAN_FILES project_archieve_data.h
+)

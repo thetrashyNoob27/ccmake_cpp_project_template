@@ -46,7 +46,9 @@ boost::program_options::variables_map arg_praser(int argc, char **argv)
     desc.add_options()("value,v", po::value<float>(&value)->default_value(3.14), "float option");
     desc.add_options()("enable,e", po::bool_switch()->default_value(false), "enable option");
     desc.add_options()("array,a", po::value<std::vector<std::string>>()->multitoken(), "array of options");
+#ifdef ENABLE_PROJECT_ARCHIEVE
     desc.add_options()("dump-project-source", po::value<std::string>(), "project tar package save location (save to path)");
+#endif
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

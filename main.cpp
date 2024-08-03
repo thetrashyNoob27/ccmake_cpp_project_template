@@ -11,7 +11,7 @@ int main(int argc, char **argv, char **env)
     argDebugPrint(vm);
     loggingSetup();
     report();
-
+#ifdef ENABLE_PROJECT_ARCHIEVE
     if (vm.count("dump-project-source"))
     {
         auto dumpPath = vm["dump-project-source"].as<std::string>();
@@ -30,4 +30,5 @@ int main(int argc, char **argv, char **env)
         }
         return 0;
     }
+#endif
 }

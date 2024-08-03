@@ -4,7 +4,9 @@
 #include <sstream>
 #include <boost/filesystem.hpp>
 #include "build_info.h"
+#ifdef ENABLE_PROJECT_ARCHIEVE
 #include "project_archieve.h"
+#endif
 #include <algorithm>
 
 static std::string formatNumberWithCommas(int number)
@@ -80,8 +82,10 @@ void report()
     BOOST_LOG_TRIVIAL(info) << "binary build time : " << build_info::buildTime;
     BOOST_LOG_TRIVIAL(info) << "start time: " << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
 
+#ifdef ENABLE_PROJECT_ARCHIEVE
     uint8_t *tarData;
     size_t tarDataSize;
     projectSourceTarData(&tarData, &tarDataSize);
     BOOST_LOG_TRIVIAL(info) << "souce project tar package size:" << formatNumberWithCommas(tarDataSize) << "Bytes";
+#endif
 }

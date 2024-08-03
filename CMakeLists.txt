@@ -43,4 +43,12 @@ endfunction()
 
 include_sub_project("sqlite3")
 include_sub_project("build_info")
-include_sub_project("project_archieve")
+
+option(PROJECT_ARCHIEVE "enable source code archieve" OFF)
+if(PROJECT_ARCHIEVE)
+    message(STATUS "source code archieve enabled")
+    add_definitions(-DENABLE_PROJECT_ARCHIEVE)
+    include_sub_project("project_archieve")
+else()
+    message(STATUS "source code archieve disabled")
+endif()
