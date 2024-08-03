@@ -6,4 +6,6 @@
 #include <string>
 #include "build_info.h"
 
+#include "project_archieve.h"
+
 #endif
