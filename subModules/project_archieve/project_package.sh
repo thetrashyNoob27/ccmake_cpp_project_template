@@ -61,6 +61,6 @@ if [[ $? -eq 1 ]]; then
     exit;
 fi
 echo "this is bash script.";
-tar_data=$(tar -cvzf - --exclude=".build" --exclude=".vscode" --exclude="${OUTPUT_H_NAME}.*"  -C "$(dirname ${ROOT_PROJECT_PATH})" "$(basename ${ROOT_PROJECT_PATH})"|xxd -i);
+tar_data=$(tar -cvzf - --exclude=".build" --exclude=".vscode" --exclude="${OUTPUT_H_NAME}.*" --exclude=".git"  -C "$(dirname ${ROOT_PROJECT_PATH})" "$(basename ${ROOT_PROJECT_PATH})"|xxd -i);
 create_head_file "${tar_data}";
 echo "tar header create to ${OUTPUT_H_NAME}";
