@@ -5,6 +5,21 @@
 #include <boost/filesystem.hpp>
 #include "build_info.h"
 #include "project_archieve.h"
+#include <algorithm>
+
+static std::string formatNumberWithCommas(int number)
+{
+    std::string str = std::to_string(number);
+    int insertPosition = str.length() - 3;
+
+    while (insertPosition > 0)
+    {
+        str.insert(insertPosition, ",");
+        insertPosition -= 3;
+    }
+
+    return str;
+}
 
 static std::string _basename(const std::string &file_path)
 {
@@ -68,5 +83,5 @@ void report()
     uint8_t tarData;
     size_t tarDataSize;
     projectSourceTarData(&tarData, &tarDataSize);
-    BOOST_LOG_TRIVIAL(info) << "souce project tar package size" << tarDataSize;
+    BOOST_LOG_TRIVIAL(info) << "souce project tar package size:" << formatNumberWithCommas(tarDataSize) << "Bytes";
 }
