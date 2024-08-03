@@ -54,19 +54,6 @@ else()
 endif()
 
 
-message(STATUS "root project path: ${ROOT_PROJECT_PATH}")
-# tar pack 
-execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/project_package.sh "${ROOT_PROJECT_PATH}"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE script_output
-    RESULT_VARIABLE script_result
-    ERROR_VARIABLE script_error
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-message(" package process output: ${script_output}")
-message(" package process error:  ${script_error}")
-
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_BUILD_TYPE Release)
 

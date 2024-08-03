@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-OUTPUT_H_NAME=root-project-tar
+OUTPUT_H_NAME=project_archieve_data
 
 test_command_exist()
 {
@@ -19,12 +19,12 @@ create_head_file()
 #ifndef _PROJECT_TAR_H_
 #define _PROJECT_TAR_H_
 #include <cstdint>
-extern unsigned char* test_h;
+extern unsigned char test_h[];
 extern unsigned char test_h_end;
 #endif
 EOF
     cat << EOF > "${OUTPUT_H_NAME}".cpp
-#include "${OUTPUT_H_NAME}".h
+#include "${OUTPUT_H_NAME}.h"
 unsigned char test_h[] = {
 $1
 };

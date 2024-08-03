@@ -1,7 +1,6 @@
 #include "build_info.h"
 #include <iostream>
 #include <fstream>
-#include "root-project-tar.h"
 using std::string;
 
 namespace build_info
@@ -17,9 +16,4 @@ namespace build_info
     const string gitDirtyStr = string(GIT_DIRTY);
     const bool gitDirty = gitDirtyStr == string("DIRTY");
 
-    void projectSourceTarData(uint8_t *tarData, uintptr_t *size)
-    {
-        tarData = test_h;
-        *size = reinterpret_cast<uintptr_t>(&test_h_end) - reinterpret_cast<uintptr_t>(test_h);
-    }
 };

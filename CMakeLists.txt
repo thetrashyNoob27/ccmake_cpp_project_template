@@ -43,5 +43,4 @@ endfunction()
 
 include_sub_project("sqlite3")
 include_sub_project("build_info")
-
-
+include_sub_project("project_archieve")

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <boost/filesystem.hpp>
 #include "build_info.h"
+#include "project_archieve.h"
 
 static std::string _basename(const std::string &file_path)
 {
@@ -66,6 +67,6 @@ void report()
 
     uint8_t tarData;
     size_t tarDataSize;
-    build_info::projectSourceTarData(&tarData, &tarDataSize);
+    projectSourceTarData(&tarData, &tarDataSize);
     BOOST_LOG_TRIVIAL(info) << "souce project tar package size" << tarDataSize;
 }
