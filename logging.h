@@ -8,6 +8,8 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/utility/setup/from_settings.hpp>
 #include <boost/log/utility/setup/file.hpp>
+#include <boost/log/attributes.hpp>
+#include <boost/log/utility/setup/from_settings.hpp>
 
 void loggingSetup();
 #endif

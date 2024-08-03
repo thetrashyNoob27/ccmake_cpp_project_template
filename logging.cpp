@@ -1,5 +1,7 @@
 #include "logging.h"
 #include <string>
+#include <iomanip>
+#include <sstream>
 
 void loggingSetup()
 {
@@ -16,6 +18,11 @@ void loggingSetup()
     }
 
     static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%LineID%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
+
+    boost::log::core::get()->add_global_attribute("ThreadID", boost::log::attributes::current_thread_id());
+    boost::log::core::get()->add_global_attribute("File", boost::log::attributes::mutable_constant<std::string>(__FILE__));
+    boost::log::core::get()->add_global_attribute("LineID", boost::log::attributes::mutable_constant<int>(__LINE__));
+    boost::log::core::get()->add_global_attribute("Function", boost::log::attributes::mutable_constant<std::string>(__FUNCTION__));
 
     boost::log::register_simple_formatter_factory<boost::log::trivial::severity_level, char>("Severity");
 
