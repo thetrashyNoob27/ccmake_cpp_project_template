@@ -4,10 +4,17 @@
 #include <string>
 namespace build_info
 {
-    extern const std::string buildTimeStr;
-    extern const std::string buildTimeStr;
+    extern const std::string buildTime;
+    extern const std::string buildTime;
     extern const std::string compilerName;
-    void test_debug();
+    extern const std::string buildType;
+    extern const std::string systemName;
+    extern const std::string cmakeVersion;
+    extern const std::string gitBranch;
+    extern const std::string gitCommit;
+    extern const std::string gitDirtyStr;
+    extern const bool gitDirty;
+
 };
 
 #endif

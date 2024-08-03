@@ -12,4 +12,5 @@
 #include <boost/log/utility/setup/from_settings.hpp>
 
 void loggingSetup();
+void report();
 #endif

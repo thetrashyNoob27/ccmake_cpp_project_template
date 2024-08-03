@@ -4,5 +4,6 @@
 #include "logging.h"
 #include "config.h"
 #include <string>
+#include "build_info.h"
 
 #endif

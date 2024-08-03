@@ -1,25 +1,37 @@
 #include <iostream>
+#include <sstream>
 #include "argProcessing.h"
+#include "logging.h"
+#include <list>
 
-void print_args(int argc, char **argv)
+void log_args(int argc, char **argv)
 {
-    std::printf("process args:\n");
     for (int i = 0; i < argc; i++)
     {
-        std::printf("[%2d][%s]\n", i, argv[i]);
+        std::stringstream ss;
+        ss << "arg-No." << i << " ";
+        ss << "[" << argv[i] << "]";
+        BOOST_LOG_TRIVIAL(info) << ss.str();
     }
     return;
 }
 
-void print_env_vars(char **env)
+void log_env_vars(char **env)
 {
-    std::printf("process env variables:\n");
+    std::vector<std::string> envList;
     char **envstr = env;
     int env_counter = 0;
     while (*envstr != NULL)
     {
-        std::printf("env[%02d] [%s]\n", env_counter++, *envstr);
+        envList.push_back(std::string(*envstr));
         envstr++;
+    }
+    for (int i = 0; i < envList.size(); i++)
+    {
+        std::stringstream ss;
+        ss << "env-No." << i << " ";
+        ss << "[" << envList[i] << "]";
+        BOOST_LOG_TRIVIAL(info) << ss.str();
     }
     return;
 }

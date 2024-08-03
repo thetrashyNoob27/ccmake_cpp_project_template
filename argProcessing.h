@@ -1,16 +1,13 @@
 #ifndef _ARGPROCESSING_H_
 #define _ARGPROCESSING_H_
-
-void print_args(int argc, char **argv);
-void print_env_vars(char **env);
-
-/* custom content start*/
-/* custom content end*/
-
 #include "config.h"
 #include "logging.h"
 #include <boost/program_options.hpp>
 #include <cstdlib>
+
+void log_args(int argc, char **argv);
+void log_env_vars(char **env);
+
 extern float value;
 boost::program_options::variables_map arg_praser(int argc, char **argv);
 void argDebugPrint(const boost::program_options::variables_map &vm);

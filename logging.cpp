@@ -48,14 +48,19 @@ void loggingSetup()
     boost::log::add_common_attributes();
 
     BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
+}
 
+void report()
+{
     auto now = std::chrono::system_clock::now();
     std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
     std::tm *localTime = std::localtime(&currentTime);
-
     // Output the formatted time
-    BOOST_LOG_TRIVIAL(info) << "project: " << PROJECT_NAME << " " << "version: " << PROJECT_VERSION;
-    BOOST_LOG_TRIVIAL(info) << "build: " << build_info::buildTimeStr << " " << "ID: " << build_info::buildTimeStr;
-    BOOST_LOG_TRIVIAL(info) << "binary build time : " << build_info::buildTimeStr;
+    BOOST_LOG_TRIVIAL(info) << "project: " << PROJECT_NAME << " " << "version: " << PROJECT_VERSION << " " << "type: " << build_info::buildType;
+    BOOST_LOG_TRIVIAL(info) << "[git] branch " << build_info::gitBranch << " " << "commit: " << build_info::gitCommit << " " << build_info::gitDirtyStr;
+    BOOST_LOG_TRIVIAL(info) << "compiler: " << build_info::buildTime << " " << "ID: " << build_info::buildTime;
+    BOOST_LOG_TRIVIAL(info) << "cmake version: " << build_info::cmakeVersion;
+    BOOST_LOG_TRIVIAL(info) << "build system: " << build_info::systemName;
+    BOOST_LOG_TRIVIAL(info) << "binary build time : " << build_info::buildTime;
     BOOST_LOG_TRIVIAL(info) << "start time: " << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
 }
