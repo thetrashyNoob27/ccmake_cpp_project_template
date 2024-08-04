@@ -3,16 +3,14 @@
 
 int main(int argc, char **argv, char **env)
 {
-
-    log_args(argc, argv);
-    log_env_vars(env);
-
     auto vm = arg_praser(argc, argv);
     argDebugPrint(vm);
     {
         std::string lp = vm["logging-path"].as<std::string>();
         loggingSetup(lp);
     }
+    log_args(argc, argv);
+    log_env_vars(env);
     report();
 #ifdef ENABLE_PROJECT_ARCHIEVE
     if (vm.count("dump-project-source"))
