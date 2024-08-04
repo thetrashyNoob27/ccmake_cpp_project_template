@@ -38,23 +38,12 @@ void loggingSetup(const std::string &loggingBase)
     namespace keywords = boost::log::keywords;
     namespace sinks = boost::log::sinks;
 
-    {
-        typedef sinks::synchronous_sink<loggingCsvBackend> sink_t;
-
-        boost::shared_ptr<logging::core> core = logging::core::get();
-
-        boost::shared_ptr<loggingCsvBackend> backend(new loggingCsvBackend("stat.csv"));
-        boost::shared_ptr<sink_t> sink(new sink_t(backend));
-        core->add_sink(sink);
-    }
-
     std::string logTextFileName;
     {
         std::ostringstream oss;
         oss << loggingBase << "/";
         oss << PROJECT_NAME << ".log";
         logTextFileName = oss.str();
-        return;
     }
 
     static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%LineID%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
