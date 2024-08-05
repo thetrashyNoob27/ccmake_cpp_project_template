@@ -69,6 +69,7 @@ void loggingSetup(const std::string &loggingBase)
     boost::log::add_common_attributes();
 
     BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
+    test_sinkSetup();
 }
 
 void report()
