@@ -24,6 +24,20 @@ struct _logFrame
     std::string pid;
     std::string tid;
     std::string message;
+
+    std::string __str__()
+    {
+        std::ostringstream oss;
+        oss << "[" << "TimeStamp" << "]" << " " << TimeStamp;
+        oss << "[" << "Severity" << "]" << " " << Severity;
+        oss << "[" << "File" << "]" << " " << File;
+        oss << "[" << "Line" << "]" << " " << Line;
+        oss << "[" << "Function" << "]" << " " << Function;
+        oss << "[" << "pid" << "]" << " " << pid;
+        oss << "[" << "pid" << "]" << " " << pid;
+        oss << "[" << "message" << "]" << " " << message;
+        return oss.str();
+    }
 };
 
 class loggingSqlite3Backend : public boost::log::sinks::basic_sink_backend<boost::log::sinks::combine_requirements<boost::log::sinks::concurrent_feeding, boost::log::sinks::flushing>::type>

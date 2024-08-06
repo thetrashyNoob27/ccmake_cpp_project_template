@@ -67,7 +67,7 @@ void loggingSqlite3Backend::insertLogFrame(const _logFrame &lf)
     }
 
     {
-        int bindIdx = 0;
+        int bindIdx = 1;
         sqlite3_bind_text(stmt, bindIdx++, lf.TimeStamp.c_str(), -1, SQLITE_STATIC);
         sqlite3_bind_text(stmt, bindIdx++, lf.Severity.c_str(), -1, SQLITE_STATIC);
         sqlite3_bind_text(stmt, bindIdx++, lf.File.c_str(), -1, SQLITE_STATIC);
@@ -147,17 +147,24 @@ loggingSqlite3Backend::~loggingSqlite3Backend()
 void loggingSqlite3Backend::consume(logging::record_view const &rec)
 {
     _logFrame lf;
-    // lf.TimeStamp = extractAttribute<std::string>(rec, "TimeStamp");
-    // {
-    //     auto s=extractAttribute<logging::trivial::severity>(rec, "Severity");
-    //     lf.Severity = std::string(s);
-    // }
-    // lf.File = extractAttribute<std::string>(rec, "File");
-    // lf.Line = extractAttribute<int>(rec, "Line");
-    // lf.Function = extractAttribute<std::string>(rec, "Function");
-    // lf.pid = extractAttribute<logging::attributes::current_process_id::value_type>(rec, "pid");
-    // lf.tid = extractAttribute<logging::attributes::current_thread_id::value_type>(rec, "tid");
-    lf.message = extractAttribute<std::string>(rec, "message");
+    lf.TimeStamp = getCurrentTimeString(); // temp solution.
+    {
+        unsigned int sev = 0;
+        if (logging::value_ref<logging::trivial::severity_level> severity =
+                rec["Severity"].extract<logging::trivial::severity_level>())
+        {
+            sev = static_cast<unsigned int>(*severity);
+        }
+        lf.Severity = std::to_string(sev);
+    }
+
+    lf.File = extractAttribute<std::string>(rec, "File");
+    lf.Line = extractAttribute<int>(rec, "Line");
+    lf.Function = extractAttribute<std::string>(rec, "Function");
+    lf.pid = extractAttribute<logging::attributes::current_process_id::value_type>(rec, "pid");
+    lf.tid = extractAttribute<logging::attributes::current_thread_id::value_type>(rec, "tid");
+    lf.message = *rec[boost::log::expressions::smessage];
+    // std::cout << lf.__str__() << std::endl;
     insertLogFrame(lf);
 }
 
