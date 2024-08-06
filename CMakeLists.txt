@@ -10,7 +10,6 @@ set(CMAKE_BUILD_TYPE Debug)
 if(POLICY CMP0167)
 cmake_policy(SET CMP0167 NEW)#3.4 don't use `-rdynamic` with executables
 endif()
-cmake_policy(SET CMP0167 NEW)
 set(ROOT_PROJECT_PATH ${CMAKE_SOURCE_DIR} CACHE PATH "Path to the root project")
 
 #boost lib settings

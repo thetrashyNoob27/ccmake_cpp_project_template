@@ -42,6 +42,7 @@ loggingSqlite3Backend::loggingSqlite3Backend(const char *file_name)
 
 void loggingSqlite3Backend::consume(logging::record_view const &rec)
 {
+    return ;
     {
         std::string info = extractAttribute<std::string>(rec, "File");
         std::cout << "loggingCsvBackend file:" << info << std::endl;

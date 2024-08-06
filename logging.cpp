@@ -10,6 +10,8 @@
 #include <algorithm>
 #include "logging_sqlite3_sink.h"
 
+boost::log::sources::severity_logger<boost::log::trivial::severity_level> ___GLOBAL_LOGGER___;
+
 static std::string formatNumberWithCommas(int number)
 {
     std::string str = std::to_string(number);
@@ -24,7 +26,7 @@ static std::string formatNumberWithCommas(int number)
     return str;
 }
 
-static std::string _basename(const std::string &file_path)
+std::string _basename(const std::string &file_path)
 {
     boost::filesystem::path p(file_path);
     return p.filename().string();
@@ -46,13 +48,10 @@ void loggingSetup(const std::string &loggingBase)
         logTextFileName = oss.str();
     }
 
-    static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%LineID%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
+    static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%Line%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
 
+    boost::log::add_common_attributes();
     boost::log::core::get()->add_global_attribute("ThreadID", boost::log::attributes::current_thread_id());
-    boost::log::core::get()->add_global_attribute("File", boost::log::attributes::mutable_constant<std::string>(_basename(__FILE__)));
-    boost::log::core::get()->add_global_attribute("LineID", boost::log::attributes::mutable_constant<int>(__LINE__));
-    boost::log::core::get()->add_global_attribute("Function", boost::log::attributes::mutable_constant<std::string>(__FUNCTION__));
-
     boost::log::register_simple_formatter_factory<boost::log::trivial::severity_level, char>("Severity");
 
     boost::log::add_console_log(
@@ -66,10 +65,12 @@ void loggingSetup(const std::string &loggingBase)
         boost::log::keywords::auto_flush = true,
         boost::log::keywords::open_mode = std::ios_base::app);
 
-    boost::log::add_common_attributes();
+    
 
     BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
     test_sinkSetup();
+
+    SIMPLE_LOGGER(info) << "simple logger tester";
 }
 
 void report()
@@ -78,13 +79,13 @@ void report()
     std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
     std::tm *localTime = std::localtime(&currentTime);
     // Output the formatted time
-    BOOST_LOG_TRIVIAL(info) << "project: " << PROJECT_NAME << " " << "version: " << PROJECT_VERSION << " " << "type: " << build_info::buildType;
-    BOOST_LOG_TRIVIAL(info) << "[git] branch " << build_info::gitBranch << " " << "commit: " << build_info::gitCommit << " " << build_info::gitDirtyStr;
-    BOOST_LOG_TRIVIAL(info) << "compiler: " << build_info::buildTime << " " << "ID: " << build_info::buildTime;
-    BOOST_LOG_TRIVIAL(info) << "cmake version: " << build_info::cmakeVersion;
-    BOOST_LOG_TRIVIAL(info) << "build system: " << build_info::systemName;
-    BOOST_LOG_TRIVIAL(info) << "binary build time : " << build_info::buildTime;
-    BOOST_LOG_TRIVIAL(info) << "start time: " << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+    SIMPLE_LOGGER(info) << "project: " << PROJECT_NAME << " " << "version: " << PROJECT_VERSION << " " << "type: " << build_info::buildType;
+    SIMPLE_LOGGER(info) << "[git] branch " << build_info::gitBranch << " " << "commit: " << build_info::gitCommit << " " << build_info::gitDirtyStr;
+    SIMPLE_LOGGER(info) << "compiler: " << build_info::buildTime << " " << "ID: " << build_info::buildTime;
+    SIMPLE_LOGGER(info) << "cmake version: " << build_info::cmakeVersion;
+    SIMPLE_LOGGER(info) << "build system: " << build_info::systemName;
+    SIMPLE_LOGGER(info) << "binary build time : " << build_info::buildTime;
+    SIMPLE_LOGGER(info) << "start time: " << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
 
 #ifdef ENABLE_PROJECT_ARCHIEVE
     uint8_t *tarData;

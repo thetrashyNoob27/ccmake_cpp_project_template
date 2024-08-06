@@ -11,7 +11,7 @@ void log_args(int argc, char **argv)
         std::stringstream ss;
         ss << "arg-No." << i << " ";
         ss << "[" << argv[i] << "]";
-        BOOST_LOG_TRIVIAL(info) << ss.str();
+        SIMPLE_LOGGER(info) << ss.str();
     }
     return;
 }
@@ -31,7 +31,7 @@ void log_env_vars(char **env)
         std::stringstream ss;
         ss << "env-No." << i << " ";
         ss << "[" << envList[i] << "]";
-        BOOST_LOG_TRIVIAL(info) << ss.str();
+        SIMPLE_LOGGER(info) << ss.str();
     }
     return;
 }
@@ -47,7 +47,7 @@ boost::program_options::variables_map arg_praser(int argc, char **argv)
     }
     catch (const std::filesystem::filesystem_error &e)
     {
-        BOOST_LOG_TRIVIAL(error) << "accquire temp dir fail:" << e.what();
+        SIMPLE_LOGGER(error) << "accquire temp dir fail:" << e.what();
     }
 
     namespace po = boost::program_options;
@@ -76,7 +76,7 @@ boost::program_options::variables_map arg_praser(int argc, char **argv)
 }
 void argDebugPrint(const boost::program_options::variables_map &vm)
 {
-#define SINK BOOST_LOG_TRIVIAL(info)
+#define SINK SIMPLE_LOGGER(info)
     if (vm.count("string"))
     {
         SINK << "arg name->" << "string: " << vm["string"].as<std::string>();
