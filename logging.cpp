@@ -65,9 +65,7 @@ void loggingSetup(const std::string &loggingBase)
         boost::log::keywords::auto_flush = true,
         boost::log::keywords::open_mode = std::ios_base::app);
 
-    
-
-    BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
+        BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
     test_sinkSetup();
 
     SIMPLE_LOGGER(info) << "simple logger tester";
@@ -91,6 +89,6 @@ void report()
     uint8_t *tarData;
     size_t tarDataSize;
     projectSourceTarData(&tarData, &tarDataSize);
-    BOOST_LOG_TRIVIAL(info) << "souce project tar package size:" << formatNumberWithCommas(tarDataSize) << "Bytes";
+    SIMPLE_LOGGER(info) << "souce project tar package size:" << formatNumberWithCommas(tarDataSize) << "Bytes";
 #endif
 }
