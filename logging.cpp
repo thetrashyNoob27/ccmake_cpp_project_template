@@ -3,11 +3,13 @@
 #include <iomanip>
 #include <sstream>
 #include <boost/filesystem.hpp>
+#include <boost/log/support/date_time.hpp>
 #include "build_info.h"
 #ifdef ENABLE_PROJECT_ARCHIEVE
 #include "project_archieve.h"
 #endif
 #include <algorithm>
+#include <thread>
 #include "logging_sqlite3_sink.h"
 
 boost::log::sources::severity_logger<boost::log::trivial::severity_level> ___GLOBAL_LOGGER___;
@@ -50,13 +52,22 @@ void loggingSetup(const std::string &loggingBase)
 
     static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%Line%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
 
+    auto defaultFormat =
+        (expr::stream
+         //<< std::hex   //To print the LineID in Hexadecimal format
+         << "[" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << "]"
+         << "[" << logging::trivial::severity << "]"
+         << "[" << expr::attr<std::string>("File") << ":" << expr::attr<int>("Line") << "(" << expr::attr<std::string>("Function") << ")" << "]"
+         << "[" << "PID:" << expr::attr<logging::attributes::current_process_id::value_type>("ProcessID") << "|" << "TID:" << expr::attr<logging::attributes::current_thread_id::value_type>("ThreadID") << "]"
+         << " " << expr::smessage);
+
     boost::log::add_common_attributes();
     boost::log::core::get()->add_global_attribute("ThreadID", boost::log::attributes::current_thread_id());
     boost::log::register_simple_formatter_factory<boost::log::trivial::severity_level, char>("Severity");
 
     boost::log::add_console_log(
         std::cout,
-        boost::log::keywords::format = COMMON_FMT,
+        boost::log::keywords::format = defaultFormat,
         boost::log::keywords::auto_flush = true);
 
     boost::log::add_file_log(
@@ -65,7 +76,7 @@ void loggingSetup(const std::string &loggingBase)
         boost::log::keywords::auto_flush = true,
         boost::log::keywords::open_mode = std::ios_base::app);
 
-        BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
+    BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
     test_sinkSetup();
 
     SIMPLE_LOGGER(info) << "simple logger tester";
