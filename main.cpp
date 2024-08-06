@@ -8,7 +8,7 @@ int main(int argc, char **argv, char **env)
     {
         std::string lp = vm["logging-path"].as<std::string>();
         loggingSetup(lp);
-        test_sinkSetup(vm["logging-path"].as<std::string>().c_str());
+        sqlte3SinkInit(vm["logging-path"].as<std::string>().c_str());
     }
     argDebugPrint(vm);
     log_args(argc, argv);

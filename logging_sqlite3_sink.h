@@ -63,5 +63,5 @@ public:
 
 private:
 };
-void test_sinkSetup(const char *path);
+void sqlte3SinkInit(const char *path);
 #endif

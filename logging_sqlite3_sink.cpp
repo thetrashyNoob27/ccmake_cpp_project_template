@@ -1,10 +1,11 @@
 #include "logging.h"
+#include "getTypeString.h"
 #include "logging_sqlite3_sink.h"
 #include "nowTimeString.h"
 
 #include <boost/log/expressions/attr_fwd.hpp>
 #include <boost/log/expressions/attr.hpp>
-
+#include "boost/date_time/posix_time/time_formatters_limited.hpp"
 #include <boost/log/core.hpp>
 #include <boost/log/attributes/attribute_value.hpp>
 #include <boost/log/attributes/attribute.hpp>
@@ -149,6 +150,15 @@ void loggingSqlite3Backend::consume(logging::record_view const &rec)
     _logFrame lf;
     lf.TimeStamp = getCurrentTimeString(); // temp solution.
     {
+        auto attr_values = rec.attribute_values();
+        auto it = attr_values.find("TimeStamp");
+        if (it != attr_values.end())
+        {
+            auto querryValue = it->second.extract<boost::posix_time::ptime>().get();
+            lf.TimeStamp = boost::posix_time::to_iso_extended_string(querryValue);
+        }
+    }
+    {
         unsigned int sev = 0;
         if (logging::value_ref<logging::trivial::severity_level> severity =
                 rec["Severity"].extract<logging::trivial::severity_level>())
@@ -173,7 +183,7 @@ void loggingSqlite3Backend::flush()
     // called by front end
 }
 
-void test_sinkSetup(const char *path)
+void sqlte3SinkInit(const char *path)
 {
     typedef sinks::synchronous_sink<loggingSqlite3Backend> sink_t;
 

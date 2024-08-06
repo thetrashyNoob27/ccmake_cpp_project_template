@@ -6,7 +6,7 @@
 
 
 template <typename T>
-std::string typeName()
+std::string getTypeName()
 {
     auto typeCode = typeid(T).name();
     int status;
@@ -17,9 +17,9 @@ std::string typeName()
         return std::string("NONE");
         
     }
-    typeName = std::string(_typeName);
+    auto typeNameStr = std::string(_typeName);
     std::free(_typeName);
-    return typeName;
+    return typeNameStr;
 }
 
 #endif
