@@ -6,26 +6,48 @@
 #include <boost/log/sinks/basic_sink_backend.hpp>
 #include <boost/log/sinks/frontend_requirements.hpp>
 
+#include <memory>
+#include <string>
 
 typedef boost::log::sinks::combine_requirements<
     boost::log::sinks::concurrent_feeding,
     boost::log::sinks::formatted_records,
     boost::log::sinks::flushing>::type frontend_requirements;
 
+struct _logFrame
+{
+    std::string TimeStamp;
+    std::string Severity;
+    std::string File;
+    std::string Line;
+    std::string Function;
+    std::string pid;
+    std::string tid;
+    std::string message;
+};
+
 class loggingSqlite3Backend : public boost::log::sinks::basic_sink_backend<boost::log::sinks::combine_requirements<boost::log::sinks::concurrent_feeding, boost::log::sinks::flushing>::type>
 {
 
 private:
+    sqlite3 *db = nullptr;
+    int dbOpenStatus;
+    std::string dbPath;
+    std::string tableName;
     template <typename T>
     std::string extractAttribute(const boost::log::record_view &rec, const char *attributeName);
+    void tableInit();
+    void closeDB();
+    void insertLogFrame(const _logFrame &lf);
 
 public:
     loggingSqlite3Backend(const char *file_name);
+    ~loggingSqlite3Backend();
 
     void consume(boost::log::record_view const &rec);
     void flush();
 
 private:
 };
-void test_sinkSetup();
+void test_sinkSetup(const char *path);
 #endif

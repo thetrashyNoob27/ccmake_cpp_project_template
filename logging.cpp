@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <thread>
 #include "logging_sqlite3_sink.h"
+#include <stdint.h>
 
 boost::log::sources::severity_logger<boost::log::trivial::severity_level> ___GLOBAL_LOGGER___;
 
@@ -41,6 +42,7 @@ void loggingSetup(const std::string &loggingBase)
     namespace expr = boost::log::expressions;
     namespace keywords = boost::log::keywords;
     namespace sinks = boost::log::sinks;
+    namespace attrs = logging::attributes;
 
     std::string logTextFileName;
     {
@@ -51,14 +53,19 @@ void loggingSetup(const std::string &loggingBase)
     }
 
     static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%Line%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
-
-    auto defaultFormat =
+    auto stdoutFormat =
         (expr::stream
          //<< std::hex   //To print the LineID in Hexadecimal format
          << "[" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << "]"
          << "[" << logging::trivial::severity << "]"
          << "[" << expr::attr<std::string>("File") << ":" << expr::attr<int>("Line") << "(" << expr::attr<std::string>("Function") << ")" << "]"
          << "[" << "PID:" << expr::attr<logging::attributes::current_process_id::value_type>("ProcessID") << "|" << "TID:" << expr::attr<logging::attributes::current_thread_id::value_type>("ThreadID") << "]"
+         << " " << expr::smessage);
+    auto textFormat =
+        (expr::stream
+         << "[" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << "]"
+         << "[" << logging::trivial::severity << "]"
+         << "[" << expr::attr<std::string>("File") << ":" << expr::attr<int>("Line") << "(" << expr::attr<std::string>("Function") << ")" << "]"
          << " " << expr::smessage);
 
     boost::log::add_common_attributes();
@@ -67,17 +74,17 @@ void loggingSetup(const std::string &loggingBase)
 
     boost::log::add_console_log(
         std::cout,
-        boost::log::keywords::format = defaultFormat,
+        boost::log::keywords::format = textFormat,
         boost::log::keywords::auto_flush = true);
 
     boost::log::add_file_log(
         boost::log::keywords::file_name = logTextFileName,
-        boost::log::keywords::format = COMMON_FMT,
+        boost::log::keywords::format = stdoutFormat,
         boost::log::keywords::auto_flush = true,
         boost::log::keywords::open_mode = std::ios_base::app);
 
     BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
-    test_sinkSetup();
+
 
     SIMPLE_LOGGER(info) << "simple logger tester";
 }

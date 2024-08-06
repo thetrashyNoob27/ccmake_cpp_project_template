@@ -8,6 +8,7 @@
 #ifdef ENABLE_PROJECT_ARCHIEVE
 #include "project_archieve.h"
 #endif
+#include "logging_sqlite3_sink.h"
 
 
 #endif

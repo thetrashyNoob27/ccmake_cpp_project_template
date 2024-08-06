@@ -13,6 +13,7 @@ int main(int argc, char **argv, char **env)
     log_args(argc, argv);
     log_env_vars(env);
     report();
+    test_sinkSetup(vm["logging-path"].as<std::string>().c_str());
 #ifdef ENABLE_PROJECT_ARCHIEVE
     if (vm.count("dump-project-source"))
     {

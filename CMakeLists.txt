@@ -25,7 +25,7 @@ configure_file("config.h.in" "config.h")
 # main executable config
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 include_directories("${CMAKE_BINARY_DIR}")# for config.h.in
-add_executable("${PROJECT_BINARY}" main.cpp argProcessing.cpp logging.cpp logging_sqlite3_sink.cpp)
+add_executable("${PROJECT_BINARY}" main.cpp argProcessing.cpp logging.cpp logging_sqlite3_sink.cpp nowTimeString.h getTypeString.h)
 target_compile_options("${PROJECT_BINARY}" PRIVATE 
     $<$<CONFIG:Debug>:-g>
     $<$<CONFIG:Release>:-g -o2>
