@@ -4,6 +4,7 @@
 #include <thread>
 #include <atomic>
 #include <condition_variable>
+#include "debug_printf.h"
 
 enum threadStatus
 {
@@ -22,24 +23,24 @@ public:
     }
     ~threadInfo()
     {
-        std::printf("~threadInfo\n");
+        DEBUG_PRINTF("~threadInfo\n");
         if (worker)
         {
-            std::printf("worker exist.\n");
+            DEBUG_PRINTF("worker exist.\n");
             quit = true;
-            std::printf("quit true.\n");
+            DEBUG_PRINTF("quit true.\n");
             while (status != threadStatus::EXITED)
             {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 cv_worker->notify_all();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                std::printf("thread %zu status%d \n", worker, status.load());
+                DEBUG_PRINTF("thread %zu status%d \n", worker, status.load());
             }
-            std::printf("notifyed...\n");
+            DEBUG_PRINTF("notifyed...\n");
             if (worker->joinable())
             {
                 worker->join();
             }
-            std::printf("joined.\n");
+            DEBUG_PRINTF("joined.\n");
             delete worker;
         }
         worker = nullptr;

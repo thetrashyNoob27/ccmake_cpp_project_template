@@ -4,6 +4,8 @@
 #include <thread>
 #include <chrono>
 #include <utility>
+
+#define PIPELINE_DEBUG
 #include <pipeline.hpp>
 
 #include "delay_plus1.h"
@@ -12,6 +14,7 @@ int main()
 {
     std::cout << "start test: " << __FILE__ << std::endl;
     plusOne factory;
+    std::printf("");
     int workerCnt = 100;
     {
         workerCnt = 10;
@@ -24,7 +27,7 @@ int main()
         }
     }
     {
-        workerCnt = 4;
+        workerCnt = 0;
         std::cout << "object worker set to  " << workerCnt;
         factory.setWorkerCount(workerCnt);
         std::cout << "   " << "hire/fire finish." << std::endl;

@@ -6,8 +6,6 @@
 #include <utility>
 #include <pipeline.hpp>
 
-
-
 #include "delay_plus1.h"
 
 // Test cases

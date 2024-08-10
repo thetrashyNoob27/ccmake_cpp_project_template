@@ -13,13 +13,15 @@
 
 #include "threadInfo.h"
 
+#include "debug_printf.h"
+
 template <typename Tinput, typename Toutput>
 class pipeline
 {
 public:
-    pipeline()
+    pipeline(unsigned int workerCnt = std::thread::hardware_concurrency())
     {
-        setWorkerCount(std::thread::hardware_concurrency());
+        setWorkerCount(workerCnt);
     }
     virtual ~pipeline()
     {
@@ -42,11 +44,24 @@ public:
         {
             return;
         }
+        std::queue<Tinput> temp;
+        {
+            DEBUG_PRINTF("try lock: fire worker\n");
+            std::lock_guard<std::mutex> lk(mutex_process);
+            DEBUG_PRINTF("lock accquired: fire worker\n");
+            std::swap(temp, queue_process);
+        }
         while (workerList.size() > count)
         {
             auto worker_it = workerList.begin();
             delete (*worker_it);
             workerList.erase(worker_it);
+        }
+        {
+            DEBUG_PRINTF("try lock: fire worker\n");
+            std::lock_guard<std::mutex> lk(mutex_process);
+            DEBUG_PRINTF("lock accquired: fire worker\n");
+            std::swap(temp, queue_process);
         }
     }
 
@@ -101,25 +116,24 @@ private:
         {
             contract->status = threadStatus::IDLE;
             {
+                DEBUG_PRINTF("thread %llu unique locked \n", contract->worker);
                 std::unique_lock<std::mutex> lock_process(mutex_process);
-                std::printf("thread %llu wait\n", contract->worker);
+                DEBUG_PRINTF("thread %llu wait(lock will be released)\n", contract->worker);
                 cv_jobAdd.wait(lock_process, [&]()
                                { return contract->quit.load() || !queue_process.empty(); });
-                std::printf("thread %llu unlocked\n", contract->worker);
+                DEBUG_PRINTF("thread %llu unlocked\n", contract->worker);
                 contract->status = threadStatus::BUSY;
                 if (contract->quit)
                 {
                     lock_process.unlock();
-                    lock_process.release();
-                    std::printf("thread %llu  quit\n", contract->worker);
+                    DEBUG_PRINTF("thread %llu  quit\n", contract->worker);
                     contract->status = threadStatus::EXITED;
                     return;
                 }
                 else if (queue_process.empty())
                 {
                     lock_process.unlock();
-                    lock_process.release();
-                    std::printf("thread %llu  queue empty\n", contract->worker);
+                    DEBUG_PRINTF("thread %llu  queue empty\n", contract->worker);
                     continue;
                 }
                 else
@@ -127,9 +141,8 @@ private:
                     jobInfo = std::move(queue_process.front());
                     queue_process.pop();
 
-                    std::printf("thread %llu  queue take\n", contract->worker);
+                    DEBUG_PRINTF("thread %llu  queue take\n", contract->worker);
                     lock_process.unlock();
-                    lock_process.release();
                 }
             }
             Toutput product = std::move(process(jobInfo));
