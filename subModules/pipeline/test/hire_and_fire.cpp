@@ -12,15 +12,16 @@
 
 int main()
 {
-    std::cout << "start test: " << __FILE__ << std::endl;
+    DEBUG_PRINTF("hire and fire test start");
     plusOne factory;
-    std::printf("");
+    factory.setWorkerCount(0);
+    DEBUG_PRINTF("object create finish.");
     int workerCnt = 100;
     {
-        workerCnt = 10;
-        std::cout << "object worker set to  " << workerCnt;
+        workerCnt = 2;
+        DEBUG_PRINTF("worker count set to:%d", workerCnt);
         factory.setWorkerCount(workerCnt);
-        std::cout << "   " << "hire/fire finish." << std::endl;
+        DEBUG_PRINTF("hire/fire finish.");
         for (const auto &v : gen_test_list(workerCnt))
         {
             factory.addJob(v);
@@ -28,9 +29,9 @@ int main()
     }
     {
         workerCnt = 0;
-        std::cout << "object worker set to  " << workerCnt;
+        DEBUG_PRINTF("worker count set to:%d", workerCnt);
         factory.setWorkerCount(workerCnt);
-        std::cout << "   " << "hire/fire finish." << std::endl;
+        DEBUG_PRINTF("hire/fire finish.");
         for (const auto &v : gen_test_list(workerCnt))
         {
             factory.addJob(v);
@@ -38,9 +39,9 @@ int main()
     }
     {
         workerCnt = 0;
-        std::cout << "object worker set to  " << workerCnt;
+        DEBUG_PRINTF("worker count set to:%d", workerCnt);
         factory.setWorkerCount(workerCnt);
-        std::cout << "   " << "hire/fire finish." << std::endl;
+        DEBUG_PRINTF("hire/fire finish.");
         for (const auto &v : gen_test_list(workerCnt))
         {
             factory.addJob(v);

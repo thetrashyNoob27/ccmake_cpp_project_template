@@ -16,7 +16,7 @@ protected:
     std::pair<int, int> process(const int &meterial) override
     {
         auto res = meterial + 1;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         auto package = std::pair<int, int>(meterial, res);
         return std::pair<int, int>(meterial, res);
     }
