@@ -106,7 +106,7 @@ private:
                 std::unique_lock<std::mutex> lock_process(mutex_process);
                 std::printf("thread %llu wait\n", contract->worker);
                 cv_jobAdd.wait(lock_process, [&]()
-                               { return (contract->quit.load() || !queue_process.empty()); });
+                               { return contract->quit.load() || !queue_process.empty(); });
                 std::printf("thread %llu unlocked\n", contract->worker);
                 contract->status = threadStatus::BUSY;
                 if (contract->quit)
