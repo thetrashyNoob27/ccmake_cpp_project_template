@@ -1,3 +1,5 @@
+#ifndef __nowTimeString_H__
+#define __nowTimeString_H__
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -16,3 +18,6 @@ std::string getCurrentTimeString(const char* format="%Y-%m-%d %H:%M:%S")
 
     return timeStream.str();
 }
+
+
+#endif
