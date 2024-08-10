@@ -56,16 +56,14 @@ public:
     }
     void addJob(const Tinput &meterial)
     {
-
-        std::unique_lock<std::mutex> lock_process(mutex_process);
+        std::lock_guard<std::mutex> lock_process(mutex_process);
         queue_process.push(meterial);
-
         cv_jobAdd.notify_one();
     }
 
     bool getProduct(Toutput &dst)
     {
-        std::unique_lock<std::mutex> lock_output(mutex_output);
+        std::lock_guard<std::mutex> lock_output(mutex_output);
         if (queue_output.empty())
             return false;
         dst = std::move(queue_output.front());
@@ -111,25 +109,30 @@ private:
                 contract->status = threadStatus::BUSY;
                 if (contract->quit)
                 {
+                    lock_process.unlock();
+                    lock_process.release();
                     std::printf("thread %llu  quit\n", contract->worker);
                     contract->status = threadStatus::EXITED;
-                    lock_process.unlock();
                     return;
                 }
                 else if (queue_process.empty())
                 {
                     lock_process.unlock();
+                    lock_process.release();
                     std::printf("thread %llu  queue empty\n", contract->worker);
                     continue;
                 }
-                jobInfo = std::move(queue_process.front());
-                queue_process.pop();
+                else
+                {
+                    jobInfo = std::move(queue_process.front());
+                    queue_process.pop();
 
-                std::printf("thread %llu  queue take\n", contract->worker);
-                lock_process.unlock();
+                    std::printf("thread %llu  queue take\n", contract->worker);
+                    lock_process.unlock();
+                    lock_process.release();
+                }
             }
             Toutput product = std::move(process(jobInfo));
-
             {
                 std::lock_guard<std::mutex> lock_output(mutex_output);
                 queue_output.push(product);

@@ -14,7 +14,7 @@ int main()
     plusOne factory;
     int workerCnt = 100;
     {
-        workerCnt = 100;
+        workerCnt = 10;
         std::cout << "object worker set to  " << workerCnt;
         factory.setWorkerCount(workerCnt);
         std::cout << "   " << "hire/fire finish." << std::endl;
@@ -24,7 +24,7 @@ int main()
         }
     }
     {
-        workerCnt = 10;
+        workerCnt = 4;
         std::cout << "object worker set to  " << workerCnt;
         factory.setWorkerCount(workerCnt);
         std::cout << "   " << "hire/fire finish." << std::endl;

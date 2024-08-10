@@ -31,8 +31,8 @@ public:
             while (status != threadStatus::EXITED)
             {
                 cv_worker->notify_all();
-                // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                // std::printf("thread status%d \n", status.load());
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                std::printf("thread %zu status%d \n", worker, status.load());
             }
             std::printf("notifyed...\n");
             if (worker->joinable())
