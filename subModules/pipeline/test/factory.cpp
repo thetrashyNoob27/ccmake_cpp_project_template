@@ -14,14 +14,15 @@
 int main()
 {
     DEBUG_PRINTF("start test:  %s", __FILE__);
-    const size_t len = 10000;
+    const size_t len = 1000;
     const double frequencyStep=0.001;
     std::vector<std::pair<double, uint_fast32_t>> source(len);
     for (int i = 0; i < len; i++)
     {
-        source[i] = std::pair<double, uint_fast32_t>(i*frequencyStep, len);
+        source[i] = std::pair<double, uint_fast32_t>(i*frequencyStep, len*1000);
     }
     sineWaveFactory factory;
+    factory.setProcessWorkerCount(8);
     DEBUG_PRINTF("object worker create count: %d", factory.getWorkerCount());
     for (auto &v : source)
     {
