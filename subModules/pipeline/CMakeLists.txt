@@ -10,6 +10,10 @@ set(CMAKE_BUILD_TYPE Release)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_library("${PROJECT_NAME}" STATIC pipeline.hpp)
+target_compile_options("${PROJECT_BINARY}" PRIVATE 
+    $<$<CONFIG:Debug>:-g>
+    $<$<CONFIG:Release>:-g -o2>
+)
 
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)

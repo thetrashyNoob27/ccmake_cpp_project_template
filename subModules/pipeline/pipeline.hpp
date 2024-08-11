@@ -33,7 +33,7 @@ public:
             workerDocument->quit = false;
             workerDocument->cv_worker = &cv_processFinish;
             workerDocument->worker = new std::thread(&pipeline::callbackJob, this, workerDocument);
-            callbackWorker.push_back(workerDocument);
+            callbackWorkerList.push_back(workerDocument);
         }
 
         setWorkerCount(workerCnt);
@@ -44,62 +44,76 @@ public:
             std::lock_guard<std::mutex> lk(mutex_process);
             decltype(queue_process) empty;
             std::swap(queue_process, empty);
+            DEBUG_PRINTF("input queue cleared(remain:%d)", queue_process.size());
         }
         setWorkerCount(0);
+        DEBUG_PRINTF("main worker all fired");
         {
             std::lock_guard<std::mutex> lk(mutex_output);
             decltype(queue_output) empty;
             std::swap(queue_output, empty);
+            DEBUG_PRINTF("output queue cleared (remain:%d)", queue_output.size());
         }
-        while (workerList.size() > 0)
+
+        while (callbackWorkerList.size() > 0)
         {
-            auto worker = workerList.front();
+            auto worker = callbackWorkerList.front();
             auto workerAddress = reinterpret_cast<uintptr_t>(worker->worker);
             delete worker;
-            workerList.pop_front();
+            callbackWorkerList.pop_front();
         }
+        DEBUG_PRINTF("callback worker all fired");
     }
 
     void setWorkerCount(unsigned int count)
     {
         std::lock_guard<std::mutex> lk(mutex_this);
-        while (workerList.size() < count)
+        while (processWorkerList.size() < count)
         {
             auto workerDocument = new threadInfo();
             workerDocument->cv_lock = &mutex_process;
             workerDocument->quit = false;
             workerDocument->cv_worker = &cv_jobAdd;
-            workerDocument->worker = new std::thread(&pipeline::workerJob, this, workerDocument);
+            workerDocument->worker = new std::thread(&pipeline::processWorkerJob, this, workerDocument);
 
-            workerList.push_back(workerDocument);
-        }
-        if (workerList.size() == count)
-        {
-            return;
+            processWorkerList.push_back(workerDocument);
         }
         {
             std::ostringstream workerAddr;
-            for (const threadInfo *info : workerList)
+            for (const threadInfo *info : processWorkerList)
             {
                 workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
             }
-            DEBUG_PRINTF("thread address now: %s", workerAddr.str().c_str());
+            DEBUG_PRINTF("avaiable thread address now: %s", workerAddr.str().c_str());
         }
-        while (workerList.size() > count)
+        if (processWorkerList.size() == count)
         {
-            auto worker = workerList.front();
+            return;
+        }
+        // fire process worker
+        while (processWorkerList.size() > count)
+        {
+            auto worker = processWorkerList.front();
             auto workerAddress = reinterpret_cast<uintptr_t>(worker->worker);
             DEBUG_PRINTF("(worker:0x%X) thread delete start", workerAddress);
             delete worker;
             DEBUG_PRINTF("(worker:0x%X) deleted finish", workerAddress);
-            workerList.pop_front();
+            processWorkerList.pop_front();
+        }
+        {
+            std::ostringstream workerAddr;
+            for (const threadInfo *info : processWorkerList)
+            {
+                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
+            }
+            DEBUG_PRINTF("(after fire worker)thread address now: %s", workerAddr.str().c_str());
         }
     }
 
     unsigned int getWorkerCount()
     {
         std::lock_guard<std::mutex> lk(mutex_this);
-        return workerList.size();
+        return processWorkerList.size();
     }
     void addJob(const Tinput &meterial)
     {
@@ -119,15 +133,12 @@ public:
     }
     void getQueueCount(size_t &pendingCnt, size_t &processingCnt, size_t &finishedCnt)
     {
-        // std::lock(mutex_process, mutex_output);
-        // std::lock_guard<std::mutex> lock_process(mutex_process, std::adopt_lock);
-        // std::lock_guard<std::mutex> lock_output(mutex_output, std::adopt_lock);
         std::scoped_lock lck{mutex_process, mutex_output};
 
         pendingCnt = queue_process.size();
         finishedCnt = queue_output.size();
         processingCnt = 0;
-        std::for_each(workerList.begin(), workerList.end(),
+        std::for_each(processWorkerList.begin(), processWorkerList.end(),
                       [&](const threadInfo *workerProfile)
                       {
                           if (workerProfile->status == threadStatus::BUSY)
@@ -139,7 +150,7 @@ public:
 
     void setCallback(std::function<void(Toutput &product)> method)
     {
-        std::lock_guard<std::mutex> lk(mutex_callbackFunction);
+        std::lock_guard<std::mutex> lk(mutex_output);
         outputCallback = method;
     }
 
@@ -147,7 +158,7 @@ protected:
     virtual Toutput process(const Tinput &meterial) = 0;
 
 private:
-    void workerJob(threadInfo *contract)
+    void processWorkerJob(threadInfo *contract)
     {
         Tinput jobInfo;
         contract->status = threadStatus::IDLE;
@@ -186,8 +197,13 @@ private:
             Toutput product = std::move(process(jobInfo));
             DEBUG_PRINTF("(worker:0x%X) process function finished", reinterpret_cast<uintptr_t>(contract->worker));
             {
+                DEBUG_PRINTF("(worker:0x%X) start lock mutex_output", reinterpret_cast<uintptr_t>(contract->worker));
                 std::lock_guard<std::mutex> lock_output(mutex_output);
+                DEBUG_PRINTF("(worker:0x%X) mutex_output locked", reinterpret_cast<uintptr_t>(contract->worker));
                 queue_output.push(product);
+            }
+            if (nullptr != outputCallback)
+            {
                 cv_processFinish.notify_one();
             }
             DEBUG_PRINTF("(worker:0x%X) loop end.", reinterpret_cast<uintptr_t>(contract->worker));
@@ -206,28 +222,23 @@ private:
                 std::unique_lock<std::mutex> lock_process(mutex_output);
                 cv_processFinish.wait(lock_process, [&]()
                                       {
-                               volatile bool notGonnaLock=contract->quit || !queue_output.empty();
+                               volatile bool notGonnaLock=contract->quit || (!queue_output.empty())&&(nullptr!=outputCallback);
                                 return notGonnaLock; });
+
                 contract->status = threadStatus::BUSY;
                 if (contract->quit)
                 {
                     break;
                 }
-                else if (queue_process.empty())
+                else if (queue_output.empty())
                 {
                     continue;
                 }
                 else
                 {
-                    jobResult = std::move(queue_output.front());
-                }
-            }
-            // call callback
-            {
-                std::lock_guard<std::mutex> lk(mutex_callbackFunction);
-                if (outputCallback)
-                {
+                    jobResult = queue_output.front();
                     outputCallback(jobResult);
+                    queue_output.pop();
                 }
             }
         }
@@ -236,7 +247,7 @@ private:
 
 private: // variables
     std::mutex mutex_this;
-    std::list<threadInfo *> workerList;
+    std::list<threadInfo *> processWorkerList;
     std::queue<Tinput> queue_process;
     std::mutex mutex_process;
     std::condition_variable cv_jobAdd;
@@ -244,8 +255,7 @@ private: // variables
     std::mutex mutex_output;
     std::condition_variable cv_processFinish;
 
-    std::list<threadInfo *> callbackWorker;
+    std::list<threadInfo *> callbackWorkerList;
     std::function<void(Toutput &product)> outputCallback;
-    std::mutex mutex_callbackFunction;
 };
 #endif

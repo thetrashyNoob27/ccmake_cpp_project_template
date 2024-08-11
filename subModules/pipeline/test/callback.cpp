@@ -24,37 +24,42 @@ int main()
         source[i] = i;
     }
     plusOne factory;
-    factory.setWorkerCount(1);
+    factory.setWorkerCount(10);
     std::cout << "object worker create count " << factory.getWorkerCount() << std::endl;
-    for (auto &v : source)
-    {
-        factory.addJob(v);
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    }
+
+    DEBUG_PRINTF("begin callback set");
     bool fail = false;
     int resultCnt = 0;
-    DEBUG_PRINTF("begin callback set\n");
     factory.setCallback([&](std::pair<int, int> &result)
                         {
                             resultCnt++;
-                            DEBUG_PRINTF("result callback");
+                                    size_t pendingCnt, processingCnt, outputCnt;
+                                    factory.getQueueCount(pendingCnt, processingCnt, outputCnt);
+        DEBUG_PRINTF("(result callback) pending:%llu processing:%llu output:%llu\n", pendingCnt, processingCnt, outputCnt);
             if (result.first + 1 != result.second)
             {
                 DEBUG_PRINTF("result error input:%d output:%d\n", result.first, result.second);
                 fail = true;
             } });
-    DEBUG_PRINTF("finish callback set\n");
-    for (int i = 0; i < 40; i++)
+    DEBUG_PRINTF("finish callback set");
+    for (auto &v : source)
+    {
+        factory.addJob(v);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+
+    for (int i = 0; i < 10; i++)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         size_t pendingCnt, processingCnt, outputCnt;
+        factory.getQueueCount(pendingCnt, processingCnt, outputCnt);
         DEBUG_PRINTF("pending:%llu processing:%llu output:%llu\n", pendingCnt, processingCnt, outputCnt);
         if (pendingCnt | processingCnt | outputCnt)
         {
         }
         else
         {
-            DEBUG_PRINTF("factory empty!\n");
+            DEBUG_PRINTF("factory empty!");
             break;
         }
     }

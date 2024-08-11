@@ -9,7 +9,6 @@
 #include <pipeline.hpp>
 
 #include "delay_plus1.h"
-
 int main()
 {
     DEBUG_PRINTF("hire and fire test start");
