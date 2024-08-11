@@ -56,91 +56,22 @@ public:
 
     void setProcessWorkerCount(unsigned int count)
     {
-        std::lock_guard<std::mutex> lk(mutex_this);
-        while (processWorkerList.size() < count)
+        // void hireFireWorker(unsigned int count, std::list<threadInfo *> &workerList, std::condition_variable &cv, std::mutex &m, std::function<std::thread *(threadInfo*)> creater)
+        auto _creator = [&](threadInfo *doc)
         {
-            auto workerDocument = new threadInfo();
-            workerDocument->cv_lock = &mutex_process;
-            workerDocument->quit = false;
-            workerDocument->cv_worker = &cv_jobAdd;
-            workerDocument->worker = new std::thread(&pipeline::processWorkerJob, this, workerDocument);
+            return new std::thread(&pipeline::processWorkerJob, this, doc);
+        };
 
-            processWorkerList.push_back(workerDocument);
-        }
-        {
-            std::ostringstream workerAddr;
-            for (const threadInfo *info : processWorkerList)
-            {
-                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
-            }
-            DEBUG_PRINTF("avaiable thread address now: %s", workerAddr.str().c_str());
-        }
-        if (processWorkerList.size() == count)
-        {
-            return;
-        }
-        // fire process worker
-        while (processWorkerList.size() > count)
-        {
-            auto worker = processWorkerList.front();
-            auto workerAddress = reinterpret_cast<uintptr_t>(worker->worker);
-            DEBUG_PRINTF("(worker:0x%X) thread delete start", workerAddress);
-            delete worker;
-            DEBUG_PRINTF("(worker:0x%X) deleted finish", workerAddress);
-            processWorkerList.pop_front();
-        }
-        {
-            std::ostringstream workerAddr;
-            for (const threadInfo *info : processWorkerList)
-            {
-                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
-            }
-            DEBUG_PRINTF("(after fire worker)thread address now: %s", workerAddr.str().c_str());
-        }
+        hireFireWorker(count, processWorkerList, cv_jobAdd, mutex_process, _creator);
     }
 
     void setCallbackWorkerCount(unsigned int count)
     {
-        while (callbackWorkerList.size() < count)
+        auto _creator = [&](threadInfo *doc)
         {
-            auto workerDocument = new threadInfo();
-            workerDocument->cv_lock = &mutex_output;
-            workerDocument->quit = false;
-            workerDocument->cv_worker = &cv_processFinish;
-            workerDocument->worker = new std::thread(&pipeline::callbackJob, this, workerDocument);
-            callbackWorkerList.push_back(workerDocument);
-        }
-
-        {
-            std::ostringstream workerAddr;
-            for (const threadInfo *info : callbackWorkerList)
-            {
-                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
-            }
-            DEBUG_PRINTF("avaiable thread address now: %s", workerAddr.str().c_str());
-        }
-        if (callbackWorkerList.size() == count)
-        {
-            return;
-        }
-        // fire callback worker
-        while (callbackWorkerList.size() > count)
-        {
-            auto worker = callbackWorkerList.front();
-            auto workerAddress = reinterpret_cast<uintptr_t>(worker->worker);
-            DEBUG_PRINTF("(worker:0x%X) thread delete start", workerAddress);
-            delete worker;
-            DEBUG_PRINTF("(worker:0x%X) deleted finish", workerAddress);
-            callbackWorkerList.pop_front();
-        }
-        {
-            std::ostringstream workerAddr;
-            for (const threadInfo *info : callbackWorkerList)
-            {
-                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
-            }
-            DEBUG_PRINTF("(after fire worker)thread address now: %s", workerAddr.str().c_str());
-        }
+            return new std::thread(&pipeline::callbackJob, this, doc);
+        };
+        hireFireWorker(count, callbackWorkerList, cv_processFinish, mutex_output, _creator);
     }
 
     unsigned int getWorkerCount()
@@ -191,6 +122,50 @@ protected:
     virtual Toutput process(const Tinput &meterial) = 0;
 
 private:
+    void hireFireWorker(unsigned int count, std::list<threadInfo *> &workerList, std::condition_variable &cv, std::mutex &m, std::function<std::thread *(threadInfo *)> creater)
+    {
+
+        while (workerList.size() < count)
+        {
+            auto workerDocument = new threadInfo();
+            workerDocument->cv_lock = &m;
+            workerDocument->quit = false;
+            workerDocument->cv_worker = &cv;
+            workerDocument->worker = creater(workerDocument);
+            workerList.push_back(workerDocument);
+        }
+
+        {
+            std::ostringstream workerAddr;
+            for (const threadInfo *info : callbackWorkerList)
+            {
+                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
+            }
+            DEBUG_PRINTF("avaiable thread address now: %s", workerAddr.str().c_str());
+        }
+        if (callbackWorkerList.size() == count)
+        {
+            return;
+        }
+        // fire callback worker
+        while (workerList.size() > count)
+        {
+            auto worker = workerList.front();
+            auto workerAddress = reinterpret_cast<uintptr_t>(worker->worker);
+            DEBUG_PRINTF("(worker:0x%X) thread delete start", workerAddress);
+            delete worker;
+            DEBUG_PRINTF("(worker:0x%X) deleted finish", workerAddress);
+            workerList.pop_front();
+        }
+        {
+            std::ostringstream workerAddr;
+            for (const threadInfo *info : workerList)
+            {
+                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
+            }
+            DEBUG_PRINTF("(after fire worker)thread address now: %s", workerAddr.str().c_str());
+        }
+    }
     void processWorkerJob(threadInfo *contract)
     {
         Tinput jobInfo;
