@@ -19,9 +19,13 @@
 #include <functional>
 
 #include "threadInfo.h"
-
 #include "debug_printf.h"
 
+#ifdef DEBUG_PRINTF
+#undef DEBUG_PRINTF
+#define DEBUG_PRINTF(format, ...) \
+    (void)0;
+#endif
 template <typename Tinput, typename Toutput>
 class pipeline
 {

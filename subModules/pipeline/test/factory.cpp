@@ -4,71 +4,82 @@
 #include <thread>
 #include <chrono>
 #include <utility>
-#include <pipeline.hpp>
 
-#include "delay_plus1.h"
+#define PIPELINE_DEBUG
+#include "pipeline.hpp"
+#include "sineWaveFactory.h"
+#undef PIPELINE_DEBUG
 
 // Test cases
 int main()
 {
-    // Test 1
-    std::cout << "start test: " << __FILE__ << std::endl;
-    const size_t len = 100;
-    std::vector<int> source(len);
+    DEBUG_PRINTF("start test:  %s", __FILE__);
+    const size_t len = 10000;
+    const double frequencyStep=0.001;
+    std::vector<std::pair<double, uint_fast32_t>> source(len);
     for (int i = 0; i < len; i++)
     {
-        source[i] = i;
+        source[i] = std::pair<double, uint_fast32_t>(i*frequencyStep, len);
     }
-    plusOne factory;
-    std::cout << "object worker create count " << factory.getWorkerCount() << std::endl;
+    sineWaveFactory factory;
+    DEBUG_PRINTF("object worker create count: %d", factory.getWorkerCount());
     for (auto &v : source)
     {
         factory.addJob(v);
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
-    int count = 0;
+    size_t changeFlag;
+    for (int i = 0; i < 10; i++)
+    {
+        size_t pendingCnt, processingCnt, outputCnt;
+        factory.getQueueCount(pendingCnt, processingCnt, outputCnt);
+        DEBUG_PRINTF("pending:%llu processing:%llu output:%llu\n", pendingCnt, processingCnt, outputCnt);
+        if (pendingCnt | processingCnt)
+        {
+        }
+        else
+        {
+            DEBUG_PRINTF("factory empty!");
+            break;
+        }
+        auto thisFlag = pendingCnt + processingCnt;
+        if (changeFlag != thisFlag)
+        {
+            i = 0;
+            changeFlag = thisFlag;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+
+    int getBackCnt = 0;
+    bool resultWrong = false;
     while (true)
     {
+        std::pair<double, std::vector<double>> result;
+        bool getstatus = factory.getProduct(result);
+        if (!getstatus)
         {
-            size_t pendingCnt, processingCnt, outputCnt;
-            factory.getQueueCount(pendingCnt, processingCnt, outputCnt);
-            std::printf("pending:%llu processing:%llu output:%llu\n", pendingCnt, processingCnt, outputCnt);
-            if (pendingCnt | processingCnt | outputCnt)
-            {
-            }
-            else
-            {
-                std::printf("factory empty!\n");
-                break;
-            }
+            break;
         }
-        std::pair<int, int> res;
-        auto success = factory.getProduct(res);
-        if (!success)
+        getBackCnt++;
+        if (!factory.testcase_resultCheck(result.first, result.second))
         {
-            while (true)
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
-                size_t pendingCnt, processingCnt, outputCnt;
-                factory.getQueueCount(pendingCnt, processingCnt, outputCnt);
-                if (outputCnt != 0)
-                    break;
-            }
-
-            continue;
-        }
-        count++;
-        if (res.first + 1 != res.second)
-        {
-            std::printf(" result error input:%d output:%d\n", res.first, res.second);
-            return 1;
+            resultWrong = true;
         }
     }
-    if (count != len)
+    if (resultWrong)
     {
-        std::cout << "not enough get back!" << count << std::endl;
+        DEBUG_PRINTF("result wrong");
         return 1;
     }
-    std::cout << "All tests passed!" << std::endl;
+    else if (getBackCnt != len)
+    {
+        DEBUG_PRINTF("result cnt not match how many put in");
+        return 2;
+    }
+    else
+    {
+        DEBUG_PRINTF("check ok");
+    }
     return 0;
 }
