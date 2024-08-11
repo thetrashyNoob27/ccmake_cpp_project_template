@@ -220,10 +220,12 @@ private:
             contract->status = threadStatus::IDLE;
             {
                 std::unique_lock<std::mutex> lock_process(mutex_output);
-                cv_processFinish.wait(lock_process, [&]()
-                                      {
-                               volatile bool notGonnaLock=contract->quit || (!queue_output.empty())&&(nullptr!=outputCallback);
-                                return notGonnaLock; });
+                auto lockCheck = [&]()
+                {
+                    volatile bool notGonnaLock = contract->quit || (!queue_output.empty()) && (nullptr != outputCallback);
+                    return notGonnaLock;
+                };
+                cv_processFinish.wait(lock_process, lockCheck);
 
                 contract->status = threadStatus::BUSY;
                 if (contract->quit)
@@ -234,13 +236,13 @@ private:
                 {
                     continue;
                 }
-                else
+                else if (nullptr != outputCallback)
                 {
                     jobResult = queue_output.front();
-                    outputCallback(jobResult);
                     queue_output.pop();
                 }
             }
+            outputCallback(jobResult);
         }
         contract->status = threadStatus::EXITED;
     }
