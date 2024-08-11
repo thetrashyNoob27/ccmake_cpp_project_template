@@ -169,11 +169,13 @@ private:
                 DEBUG_PRINTF("(worker:0x%X) worker unique locked", reinterpret_cast<uintptr_t>(contract->worker));
                 std::unique_lock<std::mutex> lock_process(mutex_process);
                 DEBUG_PRINTF("(worker:0x%X) enter wait(lock will be released)", reinterpret_cast<uintptr_t>(contract->worker));
-                cv_jobAdd.wait(lock_process, [&]()
-                               {
-                               volatile bool notGonnaLock=contract->quit || !queue_process.empty();
-                               DEBUG_PRINTF("(worker:0x%X) not gonna lock? %d (quit? %d queue not-empty? %d)",reinterpret_cast<uintptr_t>(contract->worker), notGonnaLock,contract->quit,!queue_process.empty());
-                                return notGonnaLock; });
+                auto lockCkech = [&]()
+                {
+                    volatile bool notGonnaLock = contract->quit || !queue_process.empty();
+                    DEBUG_PRINTF("(worker:0x%X) not gonna lock? %d (quit? %d queue not-empty? %d)", reinterpret_cast<uintptr_t>(contract->worker), notGonnaLock, contract->quit, !queue_process.empty());
+                    return notGonnaLock;
+                };
+                cv_jobAdd.wait(lock_process, lockCkech);
                 DEBUG_PRINTF("(worker:0x%X) post-cv-wait (mutex unlocked)", reinterpret_cast<uintptr_t>(contract->worker));
                 contract->status = threadStatus::BUSY;
                 if (contract->quit)
