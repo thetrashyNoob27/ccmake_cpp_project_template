@@ -29,14 +29,7 @@ public:
     pipeline(unsigned int workerCnt = 1 /*std::thread::hardware_concurrency()*/)
     {
         // create callback worker
-        {
-            auto workerDocument = new threadInfo();
-            workerDocument->cv_lock = &mutex_output;
-            workerDocument->quit = false;
-            workerDocument->cv_worker = &cv_processFinish;
-            workerDocument->worker = new std::thread(&pipeline::callbackJob, this, workerDocument);
-            callbackWorkerList.push_back(workerDocument);
-        }
+        setCallbackWorkerCount(1);
         // create process worker
         setProcessWorkerCount(workerCnt);
     }
@@ -57,13 +50,7 @@ public:
             DEBUG_PRINTF("output queue cleared (remain:%d)", queue_output.size());
         }
 
-        while (callbackWorkerList.size() > 0)
-        {
-            auto worker = callbackWorkerList.front();
-            auto workerAddress = reinterpret_cast<uintptr_t>(worker->worker);
-            delete worker;
-            callbackWorkerList.pop_front();
-        }
+        setCallbackWorkerCount(0);
         DEBUG_PRINTF("callback worker all fired");
     }
 
@@ -105,6 +92,50 @@ public:
         {
             std::ostringstream workerAddr;
             for (const threadInfo *info : processWorkerList)
+            {
+                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
+            }
+            DEBUG_PRINTF("(after fire worker)thread address now: %s", workerAddr.str().c_str());
+        }
+    }
+
+    void setCallbackWorkerCount(unsigned int count)
+    {
+        while (callbackWorkerList.size() < count)
+        {
+            auto workerDocument = new threadInfo();
+            workerDocument->cv_lock = &mutex_output;
+            workerDocument->quit = false;
+            workerDocument->cv_worker = &cv_processFinish;
+            workerDocument->worker = new std::thread(&pipeline::callbackJob, this, workerDocument);
+            callbackWorkerList.push_back(workerDocument);
+        }
+
+        {
+            std::ostringstream workerAddr;
+            for (const threadInfo *info : callbackWorkerList)
+            {
+                workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
+            }
+            DEBUG_PRINTF("avaiable thread address now: %s", workerAddr.str().c_str());
+        }
+        if (callbackWorkerList.size() == count)
+        {
+            return;
+        }
+        // fire callback worker
+        while (callbackWorkerList.size() > count)
+        {
+            auto worker = callbackWorkerList.front();
+            auto workerAddress = reinterpret_cast<uintptr_t>(worker->worker);
+            DEBUG_PRINTF("(worker:0x%X) thread delete start", workerAddress);
+            delete worker;
+            DEBUG_PRINTF("(worker:0x%X) deleted finish", workerAddress);
+            callbackWorkerList.pop_front();
+        }
+        {
+            std::ostringstream workerAddr;
+            for (const threadInfo *info : callbackWorkerList)
             {
                 workerAddr << std::uppercase << std::hex /* << std::setw(2 * sizeof(uintptr_t)) << std::setfill('0')*/ << reinterpret_cast<uintptr_t>(info->worker) << " ";
             }
@@ -251,12 +282,23 @@ private:
                     queue_output.pop();
                 }
             }
+            bool callbackFail = false;
             {
                 std::shared_lock<std::shared_mutex> readLock(mutex_outputCallback);
+
                 if (nullptr != outputCallback)
                 {
                     outputCallback(jobResult);
                 }
+                else
+                {
+                    callbackFail = true;
+                }
+            }
+            if (callbackFail)
+            {
+                std::lock_guard<std::mutex> lk(mutex_output);
+                queue_output.push(jobResult);
             }
         }
         contract->status = threadStatus::EXITED;
