@@ -13,13 +13,13 @@ int main()
 {
     DEBUG_PRINTF("hire and fire test start");
     plusOne factory;
-    factory.setWorkerCount(0);
+    factory.setProcessWorkerCount(0);
     DEBUG_PRINTF("object create finish.");
     int workerCnt = 100;
     {
         workerCnt = 2;
         DEBUG_PRINTF("worker count set to:%d", workerCnt);
-        factory.setWorkerCount(workerCnt);
+        factory.setProcessWorkerCount(workerCnt);
         DEBUG_PRINTF("hire/fire finish.");
         for (const auto &v : gen_test_list(workerCnt))
         {
@@ -29,7 +29,7 @@ int main()
     {
         workerCnt = 0;
         DEBUG_PRINTF("worker count set to:%d", workerCnt);
-        factory.setWorkerCount(workerCnt);
+        factory.setProcessWorkerCount(workerCnt);
         DEBUG_PRINTF("hire/fire finish.");
         for (const auto &v : gen_test_list(workerCnt))
         {
@@ -39,7 +39,7 @@ int main()
     {
         workerCnt = 0;
         DEBUG_PRINTF("worker count set to:%d", workerCnt);
-        factory.setWorkerCount(workerCnt);
+        factory.setProcessWorkerCount(workerCnt);
         DEBUG_PRINTF("hire/fire finish.");
         for (const auto &v : gen_test_list(workerCnt))
         {

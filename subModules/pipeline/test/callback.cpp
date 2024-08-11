@@ -5,11 +5,8 @@
 #include <chrono>
 #include <utility>
 
-#define PIPELINE_DEBUG
 #include "debug_printf.h"
-#undef PIPELINE_DEBUG
-
-#include <pipeline.hpp>
+#include "pipeline.hpp"
 #include "delay_plus1.h"
 
 // Test cases
@@ -24,23 +21,26 @@ int main()
         source[i] = i;
     }
     plusOne factory;
-    factory.setWorkerCount(10);
+    factory.setProcessWorkerCount(10);
     std::cout << "object worker create count " << factory.getWorkerCount() << std::endl;
 
     DEBUG_PRINTF("begin callback set");
     bool fail = false;
     int resultCnt = 0;
-    factory.setCallback([&](std::pair<int, int> &result)
-                        {
-                            resultCnt++;
-                                    size_t pendingCnt, processingCnt, outputCnt;
-                                    factory.getQueueCount(pendingCnt, processingCnt, outputCnt);
+
+    auto _callback = [&](std::pair<int, int> &result)
+    {
+        resultCnt++;
+        size_t pendingCnt, processingCnt, outputCnt;
+        factory.getQueueCount(pendingCnt, processingCnt, outputCnt);
         DEBUG_PRINTF("(result callback) pending:%llu processing:%llu output:%llu\n", pendingCnt, processingCnt, outputCnt);
-            if (result.first + 1 != result.second)
-            {
-                DEBUG_PRINTF("result error input:%d output:%d\n", result.first, result.second);
-                fail = true;
-            } });
+        if (result.first + 1 != result.second)
+        {
+            DEBUG_PRINTF("result error input:%d output:%d\n", result.first, result.second);
+            fail = true;
+        }
+    };
+    factory.setCallback(_callback);
     DEBUG_PRINTF("finish callback set");
     for (auto &v : source)
     {

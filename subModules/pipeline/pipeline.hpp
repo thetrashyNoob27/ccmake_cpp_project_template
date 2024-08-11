@@ -10,6 +10,7 @@
 #include <condition_variable>
 #include <thread>
 #include <mutex>
+#include <shared_mutex>
 
 #include <iomanip>
 #include <iostream>
@@ -27,6 +28,7 @@ class pipeline
 public:
     pipeline(unsigned int workerCnt = 1 /*std::thread::hardware_concurrency()*/)
     {
+        // create callback worker
         {
             auto workerDocument = new threadInfo();
             workerDocument->cv_lock = &mutex_output;
@@ -35,8 +37,8 @@ public:
             workerDocument->worker = new std::thread(&pipeline::callbackJob, this, workerDocument);
             callbackWorkerList.push_back(workerDocument);
         }
-
-        setWorkerCount(workerCnt);
+        // create process worker
+        setProcessWorkerCount(workerCnt);
     }
     virtual ~pipeline()
     {
@@ -46,7 +48,7 @@ public:
             std::swap(queue_process, empty);
             DEBUG_PRINTF("input queue cleared(remain:%d)", queue_process.size());
         }
-        setWorkerCount(0);
+        setProcessWorkerCount(0);
         DEBUG_PRINTF("main worker all fired");
         {
             std::lock_guard<std::mutex> lk(mutex_output);
@@ -65,7 +67,7 @@ public:
         DEBUG_PRINTF("callback worker all fired");
     }
 
-    void setWorkerCount(unsigned int count)
+    void setProcessWorkerCount(unsigned int count)
     {
         std::lock_guard<std::mutex> lk(mutex_this);
         while (processWorkerList.size() < count)
@@ -150,7 +152,7 @@ public:
 
     void setCallback(std::function<void(Toutput &product)> method)
     {
-        std::lock_guard<std::mutex> lk(mutex_output);
+        std::unique_lock<std::shared_mutex> lk(mutex_outputCallback);
         outputCallback = method;
     }
 
@@ -224,7 +226,12 @@ private:
                 std::unique_lock<std::mutex> lock_process(mutex_output);
                 auto lockCheck = [&]()
                 {
+                    if (!mutex_outputCallback.try_lock_shared())
+                    {
+                        return false; // gonna keep blocking
+                    }
                     volatile bool notGonnaLock = contract->quit || (!queue_output.empty()) && (nullptr != outputCallback);
+                    mutex_outputCallback.unlock_shared();
                     return notGonnaLock;
                 };
                 cv_processFinish.wait(lock_process, lockCheck);
@@ -238,13 +245,19 @@ private:
                 {
                     continue;
                 }
-                else if (nullptr != outputCallback)
+                else
                 {
                     jobResult = queue_output.front();
                     queue_output.pop();
                 }
             }
-            outputCallback(jobResult);
+            {
+                std::shared_lock<std::shared_mutex> readLock(mutex_outputCallback);
+                if (nullptr != outputCallback)
+                {
+                    outputCallback(jobResult);
+                }
+            }
         }
         contract->status = threadStatus::EXITED;
     }
@@ -261,5 +274,6 @@ private: // variables
 
     std::list<threadInfo *> callbackWorkerList;
     std::function<void(Toutput &product)> outputCallback;
+    std::shared_mutex mutex_outputCallback;
 };
 #endif
