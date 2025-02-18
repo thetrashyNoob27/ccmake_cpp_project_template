@@ -3,17 +3,16 @@
 
 int main(int argc, char **argv, char **env)
 {
-    auto vm = arg_praser(argc, argv);
-
+    processArgs::loadArgs(argc,argv);
+    // log path setup
     {
-        std::string lp = vm["logging-path"].as<std::string>();
+        std::string lp =processArgs::GetLoggingPath();
         loggingSetup(lp);
-        sqlte3SinkInit(vm["logging-path"].as<std::string>().c_str());
+        if(lp.size()!=0)
+        {
+            sqlte3SinkInit(lp.c_str());
+        }
     }
-    argDebugPrint(vm);
-    log_args(argc, argv);
-    log_env_vars(env);
-    report();
 
 #ifdef ENABLE_PROJECT_ARCHIEVE
     if (vm.count("dump-project-source"))
@@ -35,4 +34,5 @@ int main(int argc, char **argv, char **env)
         return 0;
     }
 #endif
+return 0;
 }

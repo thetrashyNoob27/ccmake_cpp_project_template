@@ -47,6 +47,7 @@ endfunction()
 include_sub_project("sqlite3")
 include_sub_project("build_info")
 include_sub_project("pipeline")
+include_sub_project("args")
 
 option(PROJECT_ARCHIEVE "enable source code archieve" OFF)
 if(PROJECT_ARCHIEVE)

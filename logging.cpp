@@ -44,14 +44,6 @@ void loggingSetup(const std::string &loggingBase)
     namespace sinks = boost::log::sinks;
     namespace attrs = logging::attributes;
 
-    std::string logTextFileName;
-    {
-        std::ostringstream oss;
-        oss << loggingBase << "/";
-        oss << PROJECT_NAME << ".log";
-        logTextFileName = oss.str();
-    }
-
     static const std::string COMMON_FMT("[%TimeStamp%]-[%Severity%]-[%File%:%Line%(%Function%)]-[TID:%ThreadID%|PID:%ProcessID%]:  %Message%");
     auto stdoutFormat =
         (expr::stream
@@ -77,11 +69,25 @@ void loggingSetup(const std::string &loggingBase)
         boost::log::keywords::format = textFormat,
         boost::log::keywords::auto_flush = true);
 
+    if(loggingBase.size()!=0)
+    {
+
+    std::string logTextFileName;
+    {
+        std::ostringstream oss;
+        oss << loggingBase << "/";
+        oss << PROJECT_NAME << ".log";
+        logTextFileName = oss.str();
+    }
+
+
+
     boost::log::add_file_log(
         boost::log::keywords::file_name = logTextFileName,
         boost::log::keywords::format = stdoutFormat,
         boost::log::keywords::auto_flush = true,
         boost::log::keywords::open_mode = std::ios_base::app);
+    }
 
     BOOST_LOG_TRIVIAL(info) << "project logging setup complete.";
 
