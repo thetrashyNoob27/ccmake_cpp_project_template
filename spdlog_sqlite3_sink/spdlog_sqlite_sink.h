@@ -4,6 +4,7 @@
 #include "spdlog/sinks/sink.h"
 #include "sqlite3.h"
 #include "logFrame.h"
+#include <mutex>
 
 namespace spdlog::sinks
 {
@@ -29,6 +30,7 @@ namespace spdlog::sinks
         int dbOpenStatus;
         std::string dbPath;
         std::string tableName;
+        std::mutex dblock;
 
         // DB operation methods
         void closeDB();

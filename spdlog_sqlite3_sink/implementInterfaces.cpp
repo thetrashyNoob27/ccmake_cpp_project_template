@@ -4,6 +4,7 @@
 #include <chrono>
 #include <spdlog/fmt/chrono.h>
 #include <spdlog/fmt/bundled/core.h>
+#include <iostream>
 
 // get pid
 #ifdef _WIN32
@@ -26,6 +27,7 @@ namespace spdlog::sinks
 
     void sqlite_sink::log(const details::log_msg &msg)
     {
+        std::unique_lock<std::mutex> lock(dblock, std::defer_lock);
         std::unordered_map<std::string, std::string> messageInfoMap;
         messageInfoMap["timestamp"] = fmt::format("{:%Y-%m-%d %H:%M:%S}", msg.time);
         messageInfoMap["level"] = spdlog::level::to_string_view(msg.level).data();
@@ -38,6 +40,8 @@ namespace spdlog::sinks
         messageInfoMap["file"] = std::string(msg.source.filename);
         messageInfoMap["function"] = std::string(msg.source.funcname);
         messageInfoMap["line"] = std::to_string(msg.source.line);
+
+        insertLog(messageInfoMap);
     }
 
     void sqlite_sink::flush()
@@ -65,7 +69,7 @@ namespace spdlog::sinks
 
     bool sqlite_sink::should_log(level::level_enum msg_level) const
     {
-        return true;
+        return msg_level >= level_.load();
     }
 
 }

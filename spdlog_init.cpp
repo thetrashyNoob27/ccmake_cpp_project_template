@@ -12,11 +12,13 @@
 void spdlog_init(const std::string logFilePath)
 {
     std::vector<spdlog::sink_ptr> sinks;
+
+    std::string defualtTextPattern = "[%Y-%m-%d %H:%M:%S.%f][%^%l%$][T:%t|P:%P][%s:%# %!] %v";
     // console sink
     {
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         auto formatter = std::make_unique<spdlog::pattern_formatter>();
-        formatter->set_pattern("[%Y-%m-%d %H:%M:%S][%^%l%$][T:%t|P:%P][%s:%# %!] %v");
+        formatter->set_pattern(defualtTextPattern);
         consoleSink->set_formatter(std::move(formatter));
         sinks.push_back(consoleSink);
         spdlog::logger logger("temp", consoleSink);
@@ -57,7 +59,7 @@ void spdlog_init(const std::string logFilePath)
         }
         auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(textLogFile.string(), 1024 * 1024 * 10, 3);
         auto formatter = std::make_unique<spdlog::pattern_formatter>();
-        formatter->set_pattern("[%Y-%m-%d %H:%M:%S][%^%l%$][T:%t|P:%P][%s:%# %!] %v");
+        formatter->set_pattern(defualtTextPattern);
         rotating_sink->set_formatter(std::move(formatter));
         sinks.push_back(rotating_sink);
 
@@ -65,7 +67,7 @@ void spdlog_init(const std::string logFilePath)
         logger.info("text log successful setup.");
     }
 
-    //sqlite file sink
+    // sqlite file sink
     if (enableFileSink)
     {
         std::filesystem::path sqliteLogFile(logFilePath);
@@ -112,5 +114,4 @@ void spdlog_init(const std::string logFilePath)
         }
         SPDLOG_INFO(str);
     }
-
 }

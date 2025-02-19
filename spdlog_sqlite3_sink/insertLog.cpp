@@ -1,5 +1,7 @@
 #include "spdlog_sqlite_sink.h"
 #include <unordered_map>
+#include <vector>
+#include <iostream>
 
 namespace spdlog::sinks
 {
@@ -19,25 +21,25 @@ namespace spdlog::sinks
             auto rc = sqlite3_prepare_v2(db, oss.str().c_str(), -1, &stmt, nullptr);
             if (rc != SQLITE_OK)
             {
-                // SIMPLE_LOGGER(error) << "Failed to prepare statement: " << sqlite3_errmsg(db);
+                std::cout << "Failed to prepare statement: " << sqlite3_errmsg(db)<<std::endl;
                 return;
             }
         }
-
+        const std::string _blankStr="";
         {
             int bindIdx = 1;
-            auto bindInfo=[&](std::string name)
+            auto bindInfo = [&](const std::string &name)
             {
-                std::string text="";
-                auto it=msg.find(name);
-                if(it!=msg.end())
+                const char* text=_blankStr.c_str();
+                auto it = msg.find(name);
+                if (it != msg.end())
                 {
-                    text=it->second;
+                    text = it->second.c_str();
                 }
-                sqlite3_bind_text(stmt, bindIdx++,text.c_str(), -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, bindIdx++, text, -1, SQLITE_STATIC);
             };
-            const std::vector<std::string> infoName={"timestamp","level","file","line","function","processID","threadID","message"};
-            for(const auto& key : infoName)
+            const std::vector<std::string> infoName = {"timestamp", "level", "file", "line", "function", "processID", "threadID", "message"};
+            for (const auto &key : infoName)
             {
                 bindInfo(key);
             }
@@ -46,7 +48,7 @@ namespace spdlog::sinks
             auto rc = sqlite3_step(stmt);
             if (rc != SQLITE_DONE)
             {
-                // SIMPLE_LOGGER(error) << "Failed to insert data: " << sqlite3_errmsg(db);
+                std::cout << "Failed to insert data: " << sqlite3_errmsg(db) << std::endl;
             }
         }
         sqlite3_reset(stmt);

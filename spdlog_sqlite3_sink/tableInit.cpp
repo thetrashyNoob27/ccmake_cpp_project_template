@@ -13,7 +13,7 @@ namespace spdlog::sinks
             << "timeStamp TEXT" << ","
             << "level TEXT" << ","
             << "file TEXT" << ","
-            << "fine TEXT" << ","
+            << "line TEXT" << ","
             << "function TEXT" << ","
             << "pid TEXT" << ","
             << "tid TEXT" << ","
