@@ -98,6 +98,7 @@ void spdlog_init(const std::string logFilePath)
     auto loggers = std::make_shared<spdlog::async_logger>("global_logger", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::set_default_logger(loggers);
     spdlog::set_level(spdlog::level::debug);
+    spdlog::flush_every(std::chrono::seconds(1));
 
     SPDLOG_INFO("This is a test message");
 
