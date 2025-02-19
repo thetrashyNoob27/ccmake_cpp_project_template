@@ -21,16 +21,16 @@ namespace spdlog::sinks
             auto rc = sqlite3_prepare_v2(db, oss.str().c_str(), -1, &stmt, nullptr);
             if (rc != SQLITE_OK)
             {
-                std::cout << "Failed to prepare statement: " << sqlite3_errmsg(db)<<std::endl;
+                std::cout << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
                 return;
             }
         }
-        const std::string _blankStr="";
+        const std::string _blankStr = "";
         {
             int bindIdx = 1;
             auto bindInfo = [&](const std::string &name)
             {
-                const char* text=_blankStr.c_str();
+                const char *text = _blankStr.c_str();
                 auto it = msg.find(name);
                 if (it != msg.end())
                 {
