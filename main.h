@@ -4,6 +4,8 @@
 #include "config.h"
 #include <string>
 #include "build_info.h"
+#include "spdlog_init.h"
+#include "spdlog/spdlog.h"
 
 #ifdef ENABLE_PROJECT_ARCHIEVE
 #include "project_archieve.h"

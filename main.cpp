@@ -7,8 +7,14 @@ int main(int argc, char **argv, char **env)
     // log path setup
     {
         std::string lp = processArgs::GetLoggingPath();
+        spdlog_init(lp);
     }
-    std::cout << build_info::binaryInfo() << std::endl;
+    //log start up message
+    {
+        std::string loginfo = "\n";
+        loginfo += build_info::binaryInfo();
+        SPDLOG_INFO(loginfo);
+    }
 
 #ifdef ENABLE_PROJECT_ARCHIEVE
     if (vm.count("dump-project-source"))
