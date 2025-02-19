@@ -16,4 +16,42 @@ namespace build_info
     const string gitDirtyStr = string(GIT_DIRTY);
     const bool gitDirty = gitDirtyStr == string("DIRTY");
 
+    std::string binaryInfo()
+    {
+        std::string s = "";
+        s += "buildTime: ";
+        s += buildTime;
+        s += "\n";
+        s += "compilerName: ";
+        s += compilerName;
+        s += "\n";
+        s += "buildType: ";
+        s += buildType;
+        s += "\n";
+        s += "compilerID: ";
+        s += compilerID;
+        s += "\n";
+
+        s += "systemName: ";
+        s += systemName;
+        s += "\n";
+
+        s += "cmakeVersion: ";
+        s += cmakeVersion;
+        s += "\n";
+
+        s += "gitBranch: ";
+        s += gitBranch;
+        s += "\n";
+
+        s += "gitCommit: ";
+        s += gitCommit;
+        s += "\n";
+
+        s += "gitDirtyStr: ";
+        s += gitDirtyStr;
+        s += "\n";
+        return s;
+    }
+
 };

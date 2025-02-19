@@ -20,8 +20,6 @@ sqlite3 *openSqlite3(const char *db_filename, cost char *errStr = nullptr)
         return nullptr;
     }
     return db;
-
-    
 }
 
 static int _sqlite3_callback(void *list, int count, char **data, char **columns)
@@ -52,13 +50,11 @@ bool execSqlite3(sqlite3 *db, cost char command, std::string *errStr = nulltr)
     {
         if (errStr)
         {
-            *errStr = sqlite3_errmsg(db) ;
+            *errStr = sqlite3_errmsg(db);
         }
         return false;
     }
     return true;
 }
-
-
 
 #endif

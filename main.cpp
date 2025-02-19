@@ -3,16 +3,12 @@
 
 int main(int argc, char **argv, char **env)
 {
-    processArgs::loadArgs(argc,argv);
+    processArgs::loadArgs(argc, argv);
     // log path setup
     {
-        std::string lp =processArgs::GetLoggingPath();
-        loggingSetup(lp);
-        if(lp.size()!=0)
-        {
-            sqlte3SinkInit(lp.c_str());
-        }
+        std::string lp = processArgs::GetLoggingPath();
     }
+    std::cout << build_info::binaryInfo() << std::endl;
 
 #ifdef ENABLE_PROJECT_ARCHIEVE
     if (vm.count("dump-project-source"))
@@ -20,19 +16,19 @@ int main(int argc, char **argv, char **env)
         auto dumpPath = vm["dump-project-source"].as<std::string>();
         bool saveSuccess;
         std::string errInfo;
-        SIMPLE_LOGGER(info) << "dump project tar enabled. start dump to path: " << dumpPath;
+        std::cout << "dump project tar enabled. start dump to path: " << dumpPath;
         // SIMPLE_LOGGER(dumpPath, &saveSuccess, &errInfo);
-        SIMPLE_LOGGER(info) << "dump finished(success:" << saveSuccess << ")";
+        std::cout << "dump finished(success:" << saveSuccess << ")";
         if (!saveSuccess)
         {
-            SIMPLE_LOGGER(error) << "fail reason:" << errInfo;
+            std::cout << "fail reason:" << errInfo;
         }
         else
         {
-            SIMPLE_LOGGER(error) << "save to:" << errInfo;
+            std::cout << "save to:" << errInfo;
         }
         return 0;
     }
 #endif
-return 0;
+    return 0;
 }

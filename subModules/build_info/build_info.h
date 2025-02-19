@@ -17,6 +17,8 @@ namespace build_info
     extern const std::string gitDirtyStr;
     extern const bool gitDirty;
 
+    std::string binaryInfo();
+
 };
 
 #endif

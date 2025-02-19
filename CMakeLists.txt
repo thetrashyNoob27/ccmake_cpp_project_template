@@ -12,10 +12,6 @@ cmake_policy(SET CMP0167 NEW)#3.4 don't use `-rdynamic` with executables
 endif()
 set(ROOT_PROJECT_PATH ${CMAKE_SOURCE_DIR} CACHE PATH "Path to the root project")
 
-#boost lib settings
-set(Boost_USE_STATIC_LIBS ON)
-#arg processing feature & logging
-find_package(Boost 1.80 REQUIRED COMPONENTS program_options log_setup log thread filesystem)
 find_package(Threads)
 
 # write marcon to header
@@ -25,8 +21,13 @@ configure_file("config.h.in" "config.h")
 # main executable config
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 include_directories("${CMAKE_BINARY_DIR}")# for config.h.in
-add_executable("${PROJECT_BINARY}" main.cpp argProcessing.cpp logging.cpp logging_sqlite3_sink.cpp nowTimeString.h getTypeString.h sqlte3wapper.h)
-set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
+
+file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+add_executable("${PROJECT_BINARY}" ${SOURCE_FILES})
+set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX
+    INSTALL_RPATH "$ORIGIN"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
 target_compile_options("${PROJECT_BINARY}" PRIVATE 
     $<$<CONFIG:Debug>:-g>
     $<$<CONFIG:Release>:-g -o2>
@@ -48,6 +49,7 @@ include_sub_project("sqlite3")
 include_sub_project("build_info")
 include_sub_project("pipeline")
 include_sub_project("args")
+include_sub_project("spdlog")
 
 option(PROJECT_ARCHIEVE "enable source code archieve" OFF)
 if(PROJECT_ARCHIEVE)
