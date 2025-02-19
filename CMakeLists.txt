@@ -21,9 +21,11 @@ configure_file("config.h.in" "config.h")
 # main executable config
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 include_directories("${CMAKE_BINARY_DIR}")# for config.h.in
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/spdlog_sqlite3_sink")
 
 file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-add_executable("${PROJECT_BINARY}" ${SOURCE_FILES})
+file(GLOB SPDLOG_SQLITE3_SINK_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/spdlog_sqlite3_sink/*.cpp")
+add_executable("${PROJECT_BINARY}" ${SOURCE_FILES} ${SPDLOG_SQLITE3_SINK_SOURCE_FILES})
 set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX
     INSTALL_RPATH "$ORIGIN"
     BUILD_WITH_INSTALL_RPATH TRUE

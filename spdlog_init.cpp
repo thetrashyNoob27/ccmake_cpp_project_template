@@ -65,6 +65,23 @@ void spdlog_init(const std::string logFilePath)
         logger.info("text log successful setup.");
     }
 
+    //sqlite file sink
+    if (enableFileSink)
+    {
+        std::filesystem::path sqliteLogFile(logFilePath);
+        {
+            std::string fileName = PROJECT_NAME;
+            fileName += ".sqlite3";
+            sqliteLogFile /= fileName;
+        }
+
+        auto sqlite_sink = std::make_shared<spdlog::sinks::sqlite_sink>(sqliteLogFile.string());
+        sinks.push_back(sqlite_sink);
+
+        spdlog::logger logger("temp", sqlite_sink);
+        logger.info("sqlite3 log successful setup.");
+    }
+
     spdlog::enable_backtrace(32);
     /*
     use
