@@ -7,6 +7,7 @@
 #include "config.h"
 #include <fstream>
 #include <filesystem>
+#include "spdlog_sqlite_sink.h"
 
 void spdlog_init(const std::string logFilePath)
 {
