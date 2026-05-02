@@ -37,6 +37,12 @@ target_compile_options("${PROJECT_BINARY}" PRIVATE
 
 target_link_libraries("${PROJECT_BINARY}" Threads::Threads)
 
+# googletest for submodules to use
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+set(INSTALL_GMOCK OFF CACHE BOOL "" FORCE)
+add_subdirectory(subModules/googletest)
+
 #sub modules
 function(include_sub_project subproj_name)
 message(STATUS "add sub-project: ${subproj_name}")
@@ -66,5 +72,4 @@ endif()
 option(BUILD_TESTS "Build unit tests" OFF)
 if(BUILD_TESTS)
     enable_testing()
-    add_subdirectory(test)
 endif()
