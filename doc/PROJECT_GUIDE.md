@@ -197,7 +197,42 @@ make -j$(nproc)
 
 ---
 
-## 8. Code Style & Conventions
+## 8. Building & Running Tests
+
+The project includes a `test/` directory with unit tests powered by **Google Test** (vendored in `test/lib/googletest`). Tests are **not built by default** — you must explicitly enable them.
+
+### Build with Tests Enabled
+
+```bash
+mkdir -p .build && cd .build
+cmake .. -DBUILD_TESTS=ON
+make -j$(nproc)
+```
+
+### Run Tests
+
+**Option 1 — Run the test binary directly:**
+```bash
+cd .build
+./test/test_runner
+```
+
+**Option 2 — Use CTest (automatic test discovery):**
+```bash
+cd .build
+ctest --output-on-failure
+```
+
+### Add a New Test
+
+1. Create a new `.cpp` file under `test/core/`
+2. Include `<gtest/gtest.h>` and write your tests using `TEST(...)` macros
+3. Register the new file in `test/CMakeLists.txt` under `add_executable(test_runner ...)`
+4. Rebuild with `make -j$(nproc)` — only changed files are recompiled
+
+---
+
+## 9. Code Style & Conventions
 
 To keep the arsenal consistent:
 
@@ -209,7 +244,7 @@ To keep the arsenal consistent:
 
 ---
 
-## 9. Recommended First Modules for the Arsenal
+## 10. Recommended First Modules for the Arsenal
 
 If you’re starting from scratch, prioritize these. They provide the highest utility with the lowest implementation cost:
 
@@ -223,7 +258,7 @@ Each of these is small enough to write in an afternoon and robust enough to use 
 
 ---
 
-## 10. Anti-Patterns to Avoid
+## 11. Anti-Patterns to Avoid
 
 | Anti-Pattern | Why It’s Harmful |
 |--------------|------------------|
@@ -235,7 +270,7 @@ Each of these is small enough to write in an afternoon and robust enough to use 
 
 ---
 
-## 11. Summary Checklist
+## 12. Summary Checklist
 
 Before you consider this boilerplate "ready" for a new project:
 

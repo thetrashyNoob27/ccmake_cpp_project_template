@@ -5,7 +5,7 @@ cd "${SCRIPT_DIR}"
 mkdir -p .build
 cd .build
 
-cmake ..
+cmake .. -DCMAKE_BUILD_TYPE=Release  -DBUILD_TESTS=ON
 if [[ $? -ne 0 ]]; then
     echo "cmake fail"
     exit 1
