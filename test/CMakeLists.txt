@@ -17,6 +17,7 @@ include_directories("${CMAKE_SOURCE_DIR}/spdlog_sqlite3_sink")
 # Test executables
 add_executable(test_runner
     core/test_sample.cpp
+    core/test_pipeline.cpp
 )
 
 target_link_libraries(test_runner PRIVATE
