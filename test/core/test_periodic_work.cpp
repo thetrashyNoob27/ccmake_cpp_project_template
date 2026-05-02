@@ -69,6 +69,57 @@ TEST_F(PeriodicWorkTest, SetPeriodChangesRate)
     EXPECT_GT(countFast, countSlow + 1);
 }
 
+TEST_F(PeriodicWorkTest, SetPeriodWhileTaskIsRunning)
+{
+    std::atomic<int> counter{0};
+    std::atomic<bool> inTask{false};
+
+    periodicWork worker([&counter, &inTask]() {
+        inTask = true;
+        std::this_thread::sleep_for(std::chrono::milliseconds(80));
+        inTask = false;
+        counter++;
+    }, 500);
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+    // setPeriod while task() is actively running (notify will be lost)
+    worker.setPeriod(50);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    worker.stop();
+
+    // With the bug, the first wait still uses 500ms so we'd see ~1 fire.
+    // Fixed: the new 50ms period should take effect immediately after task() returns.
+    EXPECT_GE(counter.load(), 3)
+        << "setPeriod while task() is running should still apply the new period";
+}
+
+TEST_F(PeriodicWorkTest, StopWhileTaskIsRunning)
+{
+    std::atomic<bool> inTask{false};
+    std::atomic<bool> taskFinished{false};
+
+    periodicWork worker([&inTask, &taskFinished]() {
+        inTask = true;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        inTask = false;
+        taskFinished = true;
+    }, 1000);
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    EXPECT_TRUE(inTask.load());
+
+    // stop() while task() is actively running
+    worker.stop();
+
+    EXPECT_FALSE(worker.isRunning());
+    EXPECT_TRUE(taskFinished.load())
+        << "task should be allowed to finish even when stop() interrupts it";
+}
+
 TEST_F(PeriodicWorkTest, SetCallbackSwapsFunction)
 {
     std::atomic<int> a{0};
@@ -130,4 +181,32 @@ TEST_F(PeriodicWorkTest, StopIsIdempotent)
 
     worker.stop(); // should not crash
     EXPECT_FALSE(worker.isRunning());
+}
+
+TEST_F(PeriodicWorkTest, SetCallbackIsThreadSafeDuringExecution)
+{
+    std::atomic<int> a{0};
+    std::atomic<int> b{0};
+    std::atomic<bool> inTask{false};
+
+    periodicWork worker([&a, &inTask]() {
+        inTask = true;
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        inTask = false;
+        a++;
+    }, 500);
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    EXPECT_TRUE(inTask.load());
+
+    // swap callback while task is actively executing, then speed up period
+    worker.setCallback([&b]() { b++; });
+    worker.setPeriod(50);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    worker.stop();
+
+    EXPECT_GE(a.load(), 1);
+    EXPECT_GE(b.load(), 1);
 }
