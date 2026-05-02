@@ -11,31 +11,42 @@ protected:
     void TearDown() override {}
 };
 
-TEST_F(PeriodicWorkTest, IsRunningReflectsState)
+TEST_F(PeriodicWorkTest, StartActivatesTask)
 {
-    periodicWork worker([]() {}, 100);
-    EXPECT_FALSE(worker.isRunning());
+    std::atomic<int> counter{0};
+    periodicWork worker([&counter]() { counter++; }, 100);
+
+    // Before start: no executions
+    std::this_thread::sleep_for(std::chrono::milliseconds(80));
+    EXPECT_EQ(counter.load(), 0);
 
     worker.start();
-    EXPECT_TRUE(worker.isRunning());
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    EXPECT_GE(counter.load(), 1);
 
+    int countAfterStop = counter.load();
     worker.stop();
-    EXPECT_FALSE(worker.isRunning());
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    EXPECT_EQ(counter.load(), countAfterStop);
 }
 
-TEST_F(PeriodicWorkTest, StartIsIdempotent)
+TEST_F(PeriodicWorkTest, StartRestartsWorker)
 {
     std::atomic<int> counter{0};
     periodicWork worker([&counter]() { counter++; }, 50);
 
     worker.start();
-    worker.start(); // should be a no-op
-    EXPECT_TRUE(worker.isRunning());
-
     std::this_thread::sleep_for(std::chrono::milliseconds(120));
-    worker.stop();
-
     EXPECT_GE(counter.load(), 1);
+
+    int countBeforeRestart = counter.load();
+
+    // Second start should stop then restart cleanly
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(120));
+    EXPECT_GE(counter.load(), countBeforeRestart + 1);
+
+    worker.stop();
 }
 
 TEST_F(PeriodicWorkTest, CallbackFiresPeriodically)
@@ -113,11 +124,15 @@ TEST_F(PeriodicWorkTest, StopWhileTaskIsRunning)
     EXPECT_TRUE(inTask.load());
 
     // stop() while task() is actively running
+    auto t0 = std::chrono::steady_clock::now();
     worker.stop();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - t0).count();
 
-    EXPECT_FALSE(worker.isRunning());
     EXPECT_TRUE(taskFinished.load())
         << "task should be allowed to finish even when stop() interrupts it";
+    EXPECT_LE(elapsed, 300)
+        << "stop() should not deadlock when called during task execution";
 }
 
 TEST_F(PeriodicWorkTest, SetCallbackSwapsFunction)
@@ -145,7 +160,7 @@ TEST_F(PeriodicWorkTest, DestructorAutoStops)
         periodicWork worker([&counter]() { counter++; }, 50);
         worker.start();
         std::this_thread::sleep_for(std::chrono::milliseconds(120));
-        EXPECT_TRUE(worker.isRunning());
+        EXPECT_GE(counter.load(), 1);
     }
     // Destructor should have stopped the thread cleanly
     SUCCEED();
@@ -174,13 +189,11 @@ TEST_F(PeriodicWorkTest, StopIsIdempotent)
 {
     periodicWork worker([]() {}, 100);
     worker.start();
-    EXPECT_TRUE(worker.isRunning());
 
     worker.stop();
-    EXPECT_FALSE(worker.isRunning());
-
     worker.stop(); // should not crash
-    EXPECT_FALSE(worker.isRunning());
+
+    SUCCEED();
 }
 
 TEST_F(PeriodicWorkTest, SetCallbackIsThreadSafeDuringExecution)

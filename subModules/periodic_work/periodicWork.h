@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <mutex>
@@ -11,7 +12,8 @@ class periodicWork
 public:
     periodicWork(std::function<void()> callback, const unsigned int period = 1000)
         : task(callback), periodMs(period), threadQuit(false)
-    {}
+    {
+    }
 
     virtual ~periodicWork()
     {
@@ -26,10 +28,8 @@ public:
 
     void start()
     {
-        if (threadRunning) return;
-
+        stop();
         threadQuit = false;
-        threadRunning = true;
         t = new std::thread(&periodicWork::threadJob, this);
     }
 
@@ -42,32 +42,57 @@ public:
 
     void stop()
     {
-        if (!threadRunning) return;
-
-        threadQuit = true;
+        {
+            std::lock_guard<std::mutex> lock(workLock);
+            threadQuit = true;
+        }
         workCv.notify_one();
-        if (t && t->joinable()) {
+        if (t && t->joinable())
+        {
             t->join();
         }
         delete t;
         t = nullptr;
-        threadRunning = false;
-    }
-
-    bool isRunning() const
-    {
-        return threadRunning;
     }
 
 private:
     void threadJob()
     {
-        while (!threadQuit) {
-            task();
+        auto lastRun = std::chrono::steady_clock::now();
+        while (!threadQuit)
+        {
+            {
+                std::function<void()> localTask;
+                {
+                    std::lock_guard<std::mutex> lock(workLock);
+                    localTask = task;
+                }
+                if (localTask)
+                {
+                    localTask();
+                }
+            }
+            {
+                auto unlockTime = lastRun + std::chrono::milliseconds(periodMs);
 
-            std::unique_lock<std::mutex> lock(workLock);
-            workCv.wait_for(lock, std::chrono::milliseconds(periodMs),
-                [this] { return threadQuit.load(); });
+                std::unique_lock<std::mutex> lock(workLock);
+                auto status = workCv.wait_until(lock, unlockTime,
+                                                [&, this]
+                                                {
+                                                    unlockTime = lastRun + std::chrono::milliseconds(periodMs);
+                                                    return unlockTime > std::chrono::steady_clock::now();
+                                                });
+
+                if (threadQuit)
+                {
+                    break;
+                }
+                if (!status)
+                {
+                    // timeout reached
+                }
+                lastRun = unlockTime;
+            }
         }
     }
 
@@ -77,5 +102,4 @@ private:
     std::condition_variable workCv;
     unsigned int periodMs;
     std::atomic<bool> threadQuit;
-    std::atomic<bool> threadRunning = false;
 };
