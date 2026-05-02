@@ -19,6 +19,7 @@ add_executable(test_runner
     core/test_sample.cpp
     core/test_pipeline.cpp
     core/test_build_verification.cpp
+    core/test_periodic_work.cpp
 )
 
 target_link_libraries(test_runner PRIVATE

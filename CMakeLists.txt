@@ -52,6 +52,7 @@ include_sub_project("build_info")
 include_sub_project("pipeline")
 include_sub_project("args")
 include_sub_project("spdlog")
+include_sub_project("periodic_work")
 
 option(PROJECT_ARCHIEVE "enable source code archieve" OFF)
 if(PROJECT_ARCHIEVE)

@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.10)
+set(PROJECT_BINARY "periodic_work_test")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+add_executable("${PROJECT_BINARY}" periodic_work_test.cpp)
+add_test(NAME "${PROJECT_BINARY}" COMMAND "${PROJECT_BINARY}")
