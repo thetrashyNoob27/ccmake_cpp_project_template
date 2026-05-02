@@ -7,7 +7,6 @@
 namespace build_info
 {
     extern const std::string buildTime;
-    extern const std::string buildTime;
     extern const std::string compilerName;
     extern const std::string buildType;
     extern const std::string systemName;

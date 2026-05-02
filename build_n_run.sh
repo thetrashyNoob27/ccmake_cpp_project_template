@@ -3,12 +3,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "${SCRIPT_DIR}";
 if [ -d ".build" ]
 then
-#just cd to it.
-:
-else
-rm -rv .build;
-mkdir .build;
+    rm -rv .build;
 fi
+mkdir -p .build
 
 cd .build;
 cmake ..;

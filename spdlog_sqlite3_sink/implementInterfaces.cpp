@@ -32,13 +32,13 @@ namespace spdlog::sinks
         messageInfoMap["timestamp"] = fmt::format("{:%Y-%m-%d %H:%M:%S}", msg.time);
         messageInfoMap["level"] = spdlog::level::to_string_view(msg.level).data();
         messageInfoMap["loggerName"] = msg.logger_name.data();
-        messageInfoMap["message"] = msg.logger_name.data();
+        messageInfoMap["message"] = std::string(msg.payload.data(), msg.payload.size());
 
         messageInfoMap["threadID"] = std::to_string(msg.thread_id);
         messageInfoMap["processID"] = std::to_string(getCurrentPID());
         // file info
-        messageInfoMap["file"] = std::string(msg.source.filename);
-        messageInfoMap["function"] = std::string(msg.source.funcname);
+        messageInfoMap["file"] = msg.source.filename ? msg.source.filename : "";
+        messageInfoMap["function"] = msg.source.funcname ? msg.source.funcname : "";
         messageInfoMap["line"] = std::to_string(msg.source.line);
 
         insertLog(messageInfoMap);

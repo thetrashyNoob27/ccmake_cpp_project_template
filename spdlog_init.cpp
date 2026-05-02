@@ -44,8 +44,6 @@ void spdlog_init(const std::string logFilePath)
         {
             // cant
         }
-
-        enableFileSink = true;
     }
 
     // text file sink

@@ -94,7 +94,7 @@ private:
         }
         if (parseSuccessful == false)
         {
-            std::exit(0);
+            std::exit(EXIT_FAILURE);
         }
     }
 };

@@ -17,23 +17,16 @@ int main(int argc, char **argv, char **env)
     }
 
 #ifdef ENABLE_PROJECT_ARCHIEVE
-    if (vm.count("dump-project-source"))
     {
-        auto dumpPath = vm["dump-project-source"].as<std::string>();
-        bool saveSuccess;
-        std::string errInfo;
-        std::cout << "dump project tar enabled. start dump to path: " << dumpPath;
-        // SIMPLE_LOGGER(dumpPath, &saveSuccess, &errInfo);
-        std::cout << "dump finished(success:" << saveSuccess << ")";
-        if (!saveSuccess)
+        auto &args = processArgs::getInstance();
+        if (*args.dumpProjectSource)
         {
-            std::cout << "fail reason:" << errInfo;
+            auto dumpPath = args::get(*args.dumpProjectSource);
+            std::cout << "dump project tar enabled. start dump to path: " << dumpPath << "\n";
+            // TODO: implement project archive dump
+            std::cout << "dump finished (not implemented)\n";
+            return 0;
         }
-        else
-        {
-            std::cout << "save to:" << errInfo;
-        }
-        return 0;
     }
 #endif
     return 0;

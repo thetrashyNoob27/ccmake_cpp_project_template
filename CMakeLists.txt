@@ -32,10 +32,10 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX
 )
 target_compile_options("${PROJECT_BINARY}" PRIVATE 
     $<$<CONFIG:Debug>:-g>
-    $<$<CONFIG:Release>:-g -o2>
+    $<$<CONFIG:Release>:-g -O2>
 )
 
-target_link_libraries("${PROJECT_BINARY}" ${Boost_LIBRARIES} Threads::Threads)
+target_link_libraries("${PROJECT_BINARY}" Threads::Threads)
 
 #sub modules
 function(include_sub_project subproj_name)

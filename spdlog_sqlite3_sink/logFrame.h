@@ -24,7 +24,7 @@ struct logFrame
         oss << "[" << "Line" << "]" << " " << Line;
         oss << "[" << "Function" << "]" << " " << Function;
         oss << "[" << "pid" << "]" << " " << pid;
-        oss << "[" << "pid" << "]" << " " << pid;
+        oss << "[" << "tid" << "]" << " " << tid;
         oss << "[" << "message" << "]" << " " << message;
         return oss.str();
     }
