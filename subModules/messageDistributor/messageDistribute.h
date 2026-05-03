@@ -6,8 +6,9 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <thread>
 #include <vector>
+
+#include "thread_pool.h"
 
 template<typename... Args>
 class messageDistribute
@@ -16,7 +17,11 @@ public:
     using callback = std::function<void(Args...)>;
     using callbackToken = std::shared_ptr<callback>;
 
-    messageDistribute() = default;
+    explicit messageDistribute(std::size_t pool_size = 2)
+        : pool_(pool_size)
+    {
+    }
+
     ~messageDistribute() = default;
 
     callbackToken addUpdateCallback(callback handle)
@@ -49,17 +54,13 @@ public:
         }
         for (const auto &c : localList) {
             if (c && *c) {
-                try {
-                    std::thread([](callback fn, Args... a) {
-                        try {
-                            fn(a...);
-                        } catch (...) {
-                            // Ignore exceptions in detached thread
-                        }
-                    }, *c, args...).detach();
-                } catch (...) {
-                    // Continue to next callback if thread creation fails
-                }
+                pool_.enqueue([fn = *c, args...]() {
+                    try {
+                        fn(args...);
+                    } catch (...) {
+                        // Ignore exceptions in worker thread
+                    }
+                });
             }
         }
     }
@@ -79,4 +80,5 @@ public:
 protected:
     std::vector<callbackToken> callbackList;
     mutable std::mutex listLock;
+    thread_pool pool_;
 };

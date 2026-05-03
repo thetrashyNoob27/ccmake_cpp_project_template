@@ -145,7 +145,7 @@ TEST_F(MessageDistributeTest, DistributeIsNonBlocking)
     std::atomic<bool> finished{false};
 
     dist.addUpdateCallback([&]() {
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         finished.store(true);
     });
 
@@ -154,14 +154,47 @@ TEST_F(MessageDistributeTest, DistributeIsNonBlocking)
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - t0).count();
 
-    EXPECT_LT(elapsed, 100)
+    EXPECT_LT(elapsed, 50)
         << "distribute() should return immediately without waiting for callbacks";
 
-    // Give the detached thread a moment to start, then verify it is
-    // still running (i.e. distribute() did not block for 2 seconds).
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    EXPECT_FALSE(finished.load())
-        << "callback should still be running after distribute() returns";
+    // Verify the worker actually ran and completed after a short wait.
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_TRUE(finished.load())
+        << "callback should have executed in the worker thread";
+}
+
+TEST_F(MessageDistributeTest, StressThousandCallbacksTenKDistributes)
+{
+    messageDistribute<int> dist;
+    std::atomic<int> total_received{0};
+    constexpr int num_callbacks = 1000;
+    constexpr int num_distributes = 10000;
+
+    for (int i = 0; i < num_callbacks; ++i) {
+        dist.addUpdateCallback([&total_received](int x) {
+            total_received.fetch_add(x, std::memory_order_relaxed);
+        });
+    }
+
+    auto t0 = std::chrono::steady_clock::now();
+    for (int i = 0; i < num_distributes; ++i) {
+        dist.distribute(1);
+    }
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - t0).count();
+
+    // Wait for the worker pool to drain the queue.
+    // With 2 workers and 10M trivial tasks this takes < 2s;
+    // we give a generous buffer.
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    int final_count = total_received.load();
+    int expected = num_callbacks * num_distributes;
+
+    EXPECT_LE(elapsed_ms, 10000)
+        << "Distribute loop should finish within 10 seconds (was " << elapsed_ms << " ms)";
+    EXPECT_EQ(final_count, expected)
+        << "Expected " << expected << " callbacks, got " << final_count;
 }
 
 TEST_F(MessageDistributeTest, ThreadSafetyConcurrentSubscribeAndDistribute)
