@@ -1,10 +1,16 @@
 #include <gtest/gtest.h>
 #include <messageDistribute.h>
 #include <atomic>
+#include <chrono>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
+
+static void yield_for_async()
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+}
 
 class MessageDistributeTest : public ::testing::Test
 {
@@ -19,6 +25,7 @@ TEST_F(MessageDistributeTest, AddAndDistributeSingle)
     int value = 0;
     auto token = dist.addUpdateCallback([&value](int x) { value = x; });
     dist.distribute(42);
+    yield_for_async();
     EXPECT_EQ(value, 42);
 }
 
@@ -29,6 +36,7 @@ TEST_F(MessageDistributeTest, MultipleCallbacksFired)
     dist.addUpdateCallback([&a](int x) { a = x; });
     dist.addUpdateCallback([&b](int x) { b = x; });
     dist.distribute(7);
+    yield_for_async();
     EXPECT_EQ(a, 7);
     EXPECT_EQ(b, 7);
 }
@@ -39,6 +47,7 @@ TEST_F(MessageDistributeTest, RemoveCallbackStopsDelivery)
     int value = 0;
     auto token = dist.addUpdateCallback([&value](int x) { value += x; });
     dist.distribute(1);
+    yield_for_async();
     EXPECT_EQ(value, 1);
     EXPECT_TRUE(dist.removeUpdateCallback(token));
     dist.distribute(10);
@@ -96,6 +105,7 @@ TEST_F(MessageDistributeTest, MultipleTypesSupported)
         str = std::move(s);
     });
     dist.distribute(42, "hello");
+    yield_for_async();
     EXPECT_EQ(num, 42);
     EXPECT_EQ(str, "hello");
 }
@@ -109,6 +119,7 @@ TEST_F(MessageDistributeTest, TokenIdentityIsUnique)
     EXPECT_NE(t1.get(), t2.get());
     dist.removeUpdateCallback(t1);
     dist.distribute(3);
+    yield_for_async();
     EXPECT_EQ(a, 0);
     EXPECT_EQ(b, 3);
 }
@@ -123,6 +134,7 @@ TEST_F(MessageDistributeTest, ExceptionInOneCallbackDoesNotBreakOthers)
     });
     dist.addUpdateCallback([&b](int x) { b = x; });
     dist.distribute(5);
+    yield_for_async();
     EXPECT_EQ(a, 5);
     EXPECT_EQ(b, 5);
 }

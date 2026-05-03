@@ -6,6 +6,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <thread>
 #include <vector>
 
 template<typename... Args>
@@ -49,9 +50,15 @@ public:
         for (const auto &c : localList) {
             if (c && *c) {
                 try {
-                    (*c)(args...);
+                    std::thread([](callback fn, Args... a) {
+                        try {
+                            fn(a...);
+                        } catch (...) {
+                            // Ignore exceptions in detached thread
+                        }
+                    }, *c, args...).detach();
                 } catch (...) {
-                    // Continue to next callback
+                    // Continue to next callback if thread creation fails
                 }
             }
         }
