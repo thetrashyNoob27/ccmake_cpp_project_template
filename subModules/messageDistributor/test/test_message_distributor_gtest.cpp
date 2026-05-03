@@ -139,6 +139,31 @@ TEST_F(MessageDistributeTest, ExceptionInOneCallbackDoesNotBreakOthers)
     EXPECT_EQ(b, 5);
 }
 
+TEST_F(MessageDistributeTest, DistributeIsNonBlocking)
+{
+    messageDistribute<> dist;
+    std::atomic<bool> finished{false};
+
+    dist.addUpdateCallback([&]() {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        finished.store(true);
+    });
+
+    auto t0 = std::chrono::steady_clock::now();
+    dist.distribute();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - t0).count();
+
+    EXPECT_LT(elapsed, 100)
+        << "distribute() should return immediately without waiting for callbacks";
+
+    // Give the detached thread a moment to start, then verify it is
+    // still running (i.e. distribute() did not block for 2 seconds).
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    EXPECT_FALSE(finished.load())
+        << "callback should still be running after distribute() returns";
+}
+
 TEST_F(MessageDistributeTest, ThreadSafetyConcurrentSubscribeAndDistribute)
 {
     messageDistribute<int> dist;
