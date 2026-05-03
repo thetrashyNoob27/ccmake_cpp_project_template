@@ -73,23 +73,17 @@ private:
                 }
             }
             {
-                auto unlockTime = lastRun + std::chrono::milliseconds(periodMs);
-
                 std::unique_lock<std::mutex> lock(workLock);
-                auto status = workCv.wait_until(lock, unlockTime,
-                                                [&, this]
-                                                {
-                                                    unlockTime = lastRun + std::chrono::milliseconds(periodMs);
-                                                    return unlockTime > std::chrono::steady_clock::now();
-                                                });
+                auto unlockTime = lastRun + std::chrono::milliseconds(periodMs);
+                while (!threadQuit && std::chrono::steady_clock::now() < unlockTime)
+                {
+                    workCv.wait_until(lock, unlockTime);
+                    unlockTime = lastRun + std::chrono::milliseconds(periodMs);
+                }
 
                 if (threadQuit)
                 {
                     break;
-                }
-                if (!status)
-                {
-                    // timeout reached
                 }
                 lastRun = unlockTime;
             }
