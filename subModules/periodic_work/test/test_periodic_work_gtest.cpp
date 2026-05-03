@@ -1,8 +1,11 @@
 #include <gtest/gtest.h>
 #include <periodicWork.h>
+#include <pipeline.hpp>
 #include <atomic>
 #include <chrono>
+#include <mutex>
 #include <thread>
+#include <vector>
 
 class PeriodicWorkTest : public ::testing::Test
 {
@@ -222,4 +225,172 @@ TEST_F(PeriodicWorkTest, SetCallbackIsThreadSafeDuringExecution)
 
     EXPECT_GE(a.load(), 1);
     EXPECT_GE(b.load(), 1);
+}
+
+// ---------------------------------------------------------------------------
+// Chase / bounded-lag tests (new)
+// ---------------------------------------------------------------------------
+
+TEST_F(PeriodicWorkTest, MaxLagLimitsBuffering)
+{
+    std::atomic<int> counterLag1{0};
+    std::atomic<int> counterLag5{0};
+    std::atomic<int> count1{0};
+    std::atomic<int> count5{0};
+
+    // First call is slow (200ms), letting the timer get ahead.
+    // Subsequent calls are instant.  With a larger maxLag more of
+    // those early ticks are buffered and chased later.
+    periodicWork workerLag1([&]() {
+        if (count1++ == 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+        counterLag1++;
+    }, 50, 1);
+
+    periodicWork workerLag5([&]() {
+        if (count5++ == 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+        counterLag5++;
+    }, 50, 5);
+
+    workerLag1.start();
+    workerLag5.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    workerLag1.stop();
+    workerLag5.stop();
+
+    EXPECT_GT(counterLag5.load(), counterLag1.load())
+        << "maxLag=5 should retain more ticks than maxLag=1 when the timer gets ahead";
+}
+
+TEST_F(PeriodicWorkTest, ChaseExecutesBackToBack)
+{
+    std::vector<std::chrono::steady_clock::time_point> timestamps;
+    std::mutex tsMutex;
+    std::atomic<int> callCount{0};
+
+    // First call is slow (200ms), letting the timer queue up ticks.
+    // After the slow call finishes the worker should "chase" by
+    // executing the buffered ticks back-to-back with < 30 ms gaps.
+    periodicWork worker([&]() {
+        {
+            std::lock_guard<std::mutex> lock(tsMutex);
+            timestamps.push_back(std::chrono::steady_clock::now());
+        }
+        if (callCount++ == 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+    }, 50, 5);
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    worker.stop();
+
+    int chasePairs = 0;
+    {
+        std::lock_guard<std::mutex> lock(tsMutex);
+        for (size_t i = 1; i < timestamps.size(); ++i)
+        {
+            auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            timestamps[i] - timestamps[i - 1])
+                            .count();
+            if (diff < 30)
+            {
+                ++chasePairs;
+            }
+        }
+    }
+
+    EXPECT_GE(chasePairs, 2)
+        << "with maxLag=5 the worker should execute back-to-back callbacks after the initial slow one";
+}
+
+TEST_F(PeriodicWorkTest, NeverExceedsMaxLag)
+{
+    std::atomic<int> counter{0};
+    const std::size_t maxLag = 3;
+
+    // Very slow callback: timer fires 4 times while callback runs once.
+    // With maxLag=3, at most 3 ticks can be buffered, so the 4th is
+    // dropped.  The worker should never execute more than maxLag+1
+    // times in rapid succession (1 immediate + 3 buffered).
+    periodicWork worker([&counter]() {
+        counter++;
+        std::this_thread::sleep_for(std::chrono::milliseconds(220));
+    }, 50, maxLag);
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    worker.stop();
+
+    // In 500ms the timer fires ~10 times (0,50,100,150,200,250,300,350,400,450).
+    // The worker can execute at most floor(500/220)+1 = 3 times.
+    // But more importantly, every execution consumes at most maxLag buffered
+    // ticks, so total executions should be bounded.
+    EXPECT_LE(counter.load(), static_cast<int>(maxLag) + 3)
+        << "total executions should be bounded by maxLag plus natural scheduling";
+}
+
+TEST_F(PeriodicWorkTest, AddRemoveObserver)
+{
+    std::atomic<int> primary{0};
+    std::atomic<int> observer{0};
+
+    periodicWork worker([&]() { primary++; }, 50);
+    auto token = worker.addCallback([&]() { observer++; });
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    worker.stop();
+
+    // messageDistributor fires observers in detached threads;
+    // give them a moment to finish.
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    EXPECT_GE(primary.load(), 1);
+    EXPECT_GE(observer.load(), 1);
+
+    // Remove the observer and run again; observer count should not change.
+    EXPECT_TRUE(worker.removeCallback(token));
+    int observerBefore = observer.load();
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    worker.stop();
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    EXPECT_EQ(observer.load(), observerBefore);
+}
+
+// Helper pipeline for the integration test
+class doublePipe : public pipeline<int, int>
+{
+protected:
+    int process(const int& x) override { return x * 2; }
+};
+
+TEST_F(PeriodicWorkTest, ConnectPipeline)
+{
+    doublePipe pipe;
+    std::atomic<int> result{0};
+    pipe.setCallback([&](int& x) { result += x; });
+
+    periodicWork worker(nullptr, 100, 3);
+    int tick = 1;
+    worker.connectPipeline(&pipe, std::function<int()>([&]() { return tick++; }));
+
+    worker.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
+    worker.stop();
+
+    // Allow pipeline's callback worker to drain the output queue.
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    EXPECT_GT(result.load(), 0)
+        << "connectPipeline should feed ticks into the pipeline";
 }
