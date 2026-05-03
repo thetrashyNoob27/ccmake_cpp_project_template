@@ -9,60 +9,12 @@
 #include <mutex>
 #include <thread>
 
+#include "counting_semaphore.h"
 #include "messageDistribute.h"
 
 // Forward declaration for optional pipeline integration
 template <typename Tinput, typename Toutput>
 class pipeline;
-
-// Simple C++17 counting semaphore with bounded capacity.
-// Producer releases; consumer acquires.  If the counter is already at
-// max_count the release is dropped (try_release returns false).
-class counting_semaphore
-{
-public:
-    explicit counting_semaphore(std::ptrdiff_t max_count)
-        : max_count_(max_count), count_(0), stopped_(false)
-    {
-    }
-
-    void acquire()
-    {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this] { return count_ > 0 || stopped_.load(); });
-        if (!stopped_)
-        {
-            --count_;
-        }
-    }
-
-    // Release if below max. Returns false if already full (tick dropped).
-    bool try_release()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (stopped_ || count_ >= max_count_)
-        {
-            return false;
-        }
-        ++count_;
-        cv_.notify_one();
-        return true;
-    }
-
-    void stop()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        stopped_ = true;
-        cv_.notify_all();
-    }
-
-private:
-    const std::ptrdiff_t max_count_;
-    std::ptrdiff_t count_;
-    std::atomic<bool> stopped_;
-    std::mutex mutex_;
-    std::condition_variable cv_;
-};
 
 class periodicWork
 {
@@ -117,9 +69,8 @@ public:
 
     void setPeriod(const unsigned int period)
     {
-        std::lock_guard<std::mutex> lock(workLock);
-        periodMs = period;
-        periodChanged_ = true;
+        periodMs.store(period, std::memory_order_relaxed);
+        periodChanged_.store(true, std::memory_order_release);
         workCv.notify_one();
     }
 
@@ -176,7 +127,7 @@ private:
         auto nextRun = std::chrono::steady_clock::now();
         while (!threadQuit)
         {
-            nextRun += std::chrono::milliseconds(periodMs);
+            nextRun += std::chrono::milliseconds(periodMs.load(std::memory_order_relaxed));
 
             std::unique_lock<std::mutex> lock(workLock);
             workCv.wait_until(lock, nextRun, [this] {
@@ -236,7 +187,7 @@ private:
     }
 
     std::function<void()> task;
-    unsigned int periodMs;
+    std::atomic<unsigned int> periodMs;
     const std::size_t maxLag_;
     std::atomic<bool> threadQuit;
     std::atomic<bool> periodChanged_{false};
